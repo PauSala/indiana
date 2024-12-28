@@ -1,8 +1,10 @@
 use clap::Parser;
+use file_utils::{collect_files, filter_by_extension};
 use package::Package;
 use prettytable::print_table;
 use std::{collections::HashMap, fs, path::PathBuf};
 
+pub mod file_utils;
 pub mod package;
 pub mod prettytable;
 
@@ -35,7 +37,8 @@ fn main() -> Result<(), String> {
     if args.deep {
         dep_files.push("Cargo.lock");
     }
-    list_directories(&path, &mut files, &dep_files)?;
+
+    collect_files(&path, &mut files, &dep_files)?;
 
     let mut packages: HashMap<String, Vec<PathBuf>> = HashMap::new();
 
@@ -49,13 +52,7 @@ fn main() -> Result<(), String> {
     }
 
     for (_, value) in packages {
-        if let Some(toml) = value.iter().find(|path| {
-            if let Some(ext) = path.extension() {
-                ext == "toml"
-            } else {
-                false
-            }
-        }) {
+        if let Some(toml) = filter_by_extension(&value, "toml") {
             // Parse .toml
             let toml_file = fs::read_to_string(&toml).map_err(|e| e.to_string())?;
             let parsed = Package::parse_toml(
@@ -73,13 +70,7 @@ fn main() -> Result<(), String> {
             }
 
             // parse .lock
-            if let Some(lock) = value.iter().find(|path| {
-                if let Some(ext) = path.extension() {
-                    ext == "lock"
-                } else {
-                    false
-                }
-            }) {
+            if let Some(lock) = filter_by_extension(&value, "lock") {
                 let lock_file = fs::read_to_string(&lock).map_err(|e| e.to_string())?;
                 let parsed = Package::parse_lock(
                     &lock_file,
@@ -113,29 +104,6 @@ fn main() -> Result<(), String> {
         ],
         collected,
     );
-
-    Ok(())
-}
-
-fn list_directories(
-    path: &PathBuf,
-    files: &mut Vec<PathBuf>,
-    target_files: &[&str],
-) -> Result<(), String> {
-    let entries = fs::read_dir(path).map_err(|e| e.to_string())?;
-
-    for entry in entries {
-        let entry = entry.map_err(|e| e.to_string())?;
-        let path = entry.path();
-        if path.is_dir() {
-            list_directories(&path, files, target_files)?;
-        } else if path.is_file() {
-            let file_name = path.file_name().unwrap().to_str().unwrap();
-            if target_files.contains(&file_name) {
-                files.push(path);
-            }
-        }
-    }
 
     Ok(())
 }
