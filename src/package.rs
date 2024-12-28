@@ -17,37 +17,38 @@ impl Package {
         return "".to_string();
     }
 
+    fn parse_dependency(dep: &Value, package_name: &str, path: &str) -> Self {
+        let version = dep.get("version").unwrap_or(dep);
+
+        Package {
+            name: package_name.to_string(),
+            dep_version: version
+                .as_str()
+                .unwrap_or("Dependency is not a String")
+                .to_string(),
+            path: path.to_owned(),
+        }
+    }
+
     pub fn parse_toml(contents: &str, dependency_name: &str, path: &str) -> Option<Self> {
         let value = contents.parse::<Table>();
 
         if let Ok(table) = value {
-            let package = &table["package"]["name"].as_str();
+            let package_name = table
+                .get("package")
+                .and_then(|pack| pack.get("name"))
+                .and_then(Value::as_str)
+                .unwrap_or("package name not found");
 
-            let parse_dependency = |dep: &Value| {
-                let version = dep.get("version").unwrap_or(dep);
-
-                return Some(Package {
-                    name: package.unwrap_or("Package name not found").to_string(),
-                    dep_version: version.as_str().unwrap().to_string(),
-                    path: path.to_owned(),
-                });
-            };
-
-            let dev_deps = &table.get("dependencies");
-            if let Some(deps) = dev_deps {
-                if let Some(dep) = deps.get(dependency_name) {
-                    return parse_dependency(dep);
-                }
-            }
-
-            let dev_deps = &table.get("dep-dependencies");
-            if let Some(deps) = dev_deps {
-                if let Some(dep) = deps.get(dependency_name) {
-                    return parse_dependency(dep);
+            for key in ["dependencies", "dep-dependencies"] {
+                if let Some(deps) = table.get(key) {
+                    if let Some(dep) = deps.get(dependency_name) {
+                        return Some(Package::parse_dependency(dep, package_name, path));
+                    }
                 }
             }
         } else {
-            println!("{:?}", value);
+            println!("Unparseable file: {:?}", value);
         }
         None
     }
@@ -58,34 +59,28 @@ impl Package {
         path: &str,
         package_name: String,
     ) -> Vec<Package> {
-        let value = contents.parse::<Table>();
         let mut res = Vec::new();
-
-        if let Ok(table) = value {
-            match &table["package"] {
-                Value::Array(vec) => {
-                    for package in vec {
-                        let version = package.get("version");
-                        let name = package.get("name");
-                        if let Some(Value::String(name)) = name {
-                            if name == dependency_name {
-                                res.push(Package {
-                                    name: package_name.clone(),
-                                    dep_version: version
-                                        .expect("pakcage should have a version")
-                                        .as_str()
-                                        .unwrap()
-                                        .to_owned(),
-                                    path: path.to_owned(),
-                                });
-                            }
+        if let Ok(table) = contents.parse::<Table>() {
+            if let Some(Value::Array(packages)) = table.get("package") {
+                for package in packages {
+                    if let Some(Value::String(name)) = package.get("name") {
+                        if name == dependency_name {
+                            let version = package
+                                .get("version")
+                                .and_then(Value::as_str)
+                                .unwrap_or("Version not found")
+                                .to_owned();
+                            res.push(Package {
+                                name: package_name.clone(),
+                                dep_version: version,
+                                path: path.to_owned(),
+                            });
                         }
                     }
                 }
-                _ => return res,
             }
         } else {
-            println!("{:?}", value);
+            println!("Unparseable file: {:?}", contents);
         }
         res
     }

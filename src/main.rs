@@ -6,6 +6,7 @@ use std::{collections::HashMap, fs, path::PathBuf};
 pub mod package;
 pub mod prettytable;
 
+/// Searches for a specified cargo dependency in all projects within a given directory.
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
