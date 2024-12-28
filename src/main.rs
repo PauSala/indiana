@@ -58,7 +58,11 @@ fn main() -> Result<(), String> {
         }) {
             // Parse .toml
             let toml_file = fs::read_to_string(&toml).map_err(|e| e.to_string())?;
-            let parsed = Package::parse_toml(&toml_file, &args.name, toml.to_str().unwrap());
+            let parsed = Package::parse_toml(
+                &toml_file,
+                &args.name,
+                toml.to_str().expect("Path must be a file"),
+            );
             if let Some(parsed) = parsed {
                 found.push(parsed);
             }

@@ -11,10 +11,15 @@ impl Package {
     pub fn parse_name(contents: &str) -> String {
         let value = contents.parse::<Table>();
         if let Ok(table) = value {
-            let package = &table["package"]["name"].as_str();
-            return package.unwrap().to_string();
+            table
+                .get("package")
+                .and_then(|pack| pack.get("name"))
+                .and_then(Value::as_str)
+                .unwrap_or("package name not found")
+                .to_string()
+        } else {
+            "Package name not found".to_string()
         }
-        return "".to_string();
     }
 
     fn parse_dependency(dep: &Value, package_name: &str, path: &str) -> Self {
