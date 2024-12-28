@@ -63,12 +63,16 @@ fn main() -> Result<(), String> {
                 &args.name,
                 toml.to_str().expect("Path must be a file"),
             );
+
+            let package_name;
             if let Some(parsed) = parsed {
+                package_name = parsed.name.clone();
                 found.push(parsed);
+            } else {
+                package_name = "Package name not found".to_string();
             }
 
             // parse .lock
-            let name = Package::parse_name(&toml_file);
             if let Some(lock) = value.iter().find(|path| {
                 if let Some(ext) = path.extension() {
                     ext == "lock"
@@ -77,8 +81,12 @@ fn main() -> Result<(), String> {
                 }
             }) {
                 let lock_file = fs::read_to_string(&lock).map_err(|e| e.to_string())?;
-                let parsed =
-                    Package::parse_lock(&lock_file, &args.name, lock.to_str().unwrap(), name);
+                let parsed = Package::parse_lock(
+                    &lock_file,
+                    &args.name,
+                    lock.to_str().unwrap(),
+                    package_name,
+                );
                 found.extend(parsed);
             }
         }

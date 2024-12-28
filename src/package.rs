@@ -1,6 +1,6 @@
 use toml::{Table, Value};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Package {
     pub name: String,
     pub dep_version: String,
@@ -8,20 +8,6 @@ pub struct Package {
 }
 
 impl Package {
-    pub fn parse_name(contents: &str) -> String {
-        let value = contents.parse::<Table>();
-        if let Ok(table) = value {
-            table
-                .get("package")
-                .and_then(|pack| pack.get("name"))
-                .and_then(Value::as_str)
-                .unwrap_or("package name not found")
-                .to_string()
-        } else {
-            "Package name not found".to_string()
-        }
-    }
-
     fn parse_dependency(dep: &Value, package_name: &str, path: &str) -> Self {
         let version = dep.get("version").unwrap_or(dep);
 
