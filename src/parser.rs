@@ -11,7 +11,7 @@ pub fn process_packages(
     for (_, value) in packages {
         if let Some(toml) = filter_by_extension(&value, "toml") {
             // Parse .toml
-            let toml_file = fs::read_to_string(&toml).map_err(|e| e.to_string())?;
+            let toml_file = fs::read_to_string(toml).map_err(|e| e.to_string())?;
             let parsed = Package::parse_toml(
                 &toml_file,
                 dep_name,
@@ -23,12 +23,12 @@ pub fn process_packages(
                 package_name = parsed.name.clone();
                 found.push(parsed);
             } else {
-                package_name = "Package name not found".to_string();
+                package_name = Package::parse_name(&toml_file);
             }
 
             // parse .lock
             if let Some(lock) = filter_by_extension(&value, "lock") {
-                let lock_file = fs::read_to_string(&lock).map_err(|e| e.to_string())?;
+                let lock_file = fs::read_to_string(lock).map_err(|e| e.to_string())?;
                 let parsed =
                     Package::parse_lock(&lock_file, dep_name, lock.to_str().unwrap(), package_name);
                 found.extend(parsed);
@@ -39,10 +39,7 @@ pub fn process_packages(
     Ok(found
         .into_iter()
         .map(|package| {
-            let mut res = Vec::new();
-            res.push(package.name);
-            res.push(package.dep_version);
-            res.push(package.path);
+            let res = vec![package.name, package.dep_version, package.path];
             res
         })
         .collect())

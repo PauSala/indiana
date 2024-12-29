@@ -21,6 +21,20 @@ impl Package {
         }
     }
 
+    pub fn parse_name(contents: &str) -> String {
+        let value = contents.parse::<Table>();
+        if let Ok(table) = value {
+            table
+                .get("package")
+                .and_then(|pack| pack.get("name"))
+                .and_then(Value::as_str)
+                .unwrap_or("Package name not found")
+                .to_string()
+        } else {
+            "Package name not found".to_string()
+        }
+    }
+
     pub fn parse_toml(contents: &str, dependency_name: &str, path: &str) -> Option<Self> {
         let value = contents.parse::<Table>();
 

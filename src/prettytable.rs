@@ -6,24 +6,24 @@ pub fn print_table(headers: Vec<&str>, rows: Vec<Vec<String>>) {
 
     // Headers
     for header in &headers {
-        print!("{}", format!("{:<width$}", header, width = max));
+        print!("{:<width$}", header, width = max);
     }
     println!();
 
     // Rows
     for row in rows {
         for cell in row {
-            print!("{}", format!("{:<width$}", cell, width = max));
+            print!("{:<width$}", cell, width = max);
         }
         println!();
     }
 }
 
-fn max_non_last_value(headers: &Vec<&str>, rows: &Vec<Vec<String>>) -> usize {
+fn max_non_last_value(headers: &[&str], rows: &[Vec<String>]) -> usize {
     let mut max = headers[0..headers.len() - 1]
         .iter()
         .max_by_key(|a| a.len())
-        .unwrap_or(&&"")
+        .unwrap_or(&"")
         .len();
 
     rows.iter().for_each(|r| {

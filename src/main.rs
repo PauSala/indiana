@@ -44,7 +44,7 @@ fn main() -> Result<(), String> {
         if let Some(parent) = file.parent() {
             packages
                 .entry(parent.to_str().unwrap().to_string())
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push(file);
         }
     }
