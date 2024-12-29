@@ -50,14 +50,8 @@ pub fn process_packages(
 }
 
 fn parse_name(contents: &str) -> String {
-    let value = contents.parse::<Table>();
-    if let Ok(table) = value {
-        table
-            .get("package")
-            .and_then(|pack| pack.get("name"))
-            .and_then(Value::as_str)
-            .unwrap_or("Package name not found")
-            .to_string()
+    if let Some(toml) = toml::from_str::<Toml>(contents).ok() {
+        toml.package.name
     } else {
         "Package name not found".to_string()
     }
@@ -76,7 +70,6 @@ fn parse_toml(contents: &str, dependency_name: &str, path: &str) -> Option<Depen
             }
         }
     }
-
     None
 }
 
