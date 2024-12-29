@@ -1,30 +1,15 @@
 use clap::Parser;
+use commands::Args;
 use file_utils::collect_files;
 use parser::process_packages;
 use prettytable::print_table;
 use std::{collections::HashMap, path::PathBuf};
 
+pub mod commands;
 pub mod file_utils;
 pub mod package;
 pub mod parser;
 pub mod prettytable;
-
-/// Searches for a specified cargo dependency in all projects within a given directory.
-#[derive(Parser, Debug)]
-#[command(version, about, long_about = None)]
-struct Args {
-    /// The name of the dependency to search for.
-    #[arg(short, long)]
-    name: String,
-
-    /// The directory to search in. Defaults to the current directory.
-    #[arg(short, long, default_value = ".")]
-    path: String,
-
-    /// Flag to indicate whether to search for the dependency in Cargo.lock as well.
-    #[arg(short, long, default_value_t = false)]
-    deep: bool,
-}
 
 fn main() -> Result<(), String> {
     let args = Args::parse();
@@ -38,16 +23,15 @@ fn main() -> Result<(), String> {
     let mut files = Vec::new();
     collect_files(&path, &mut files, &dep_files)?;
 
-    let mut packages: HashMap<String, Vec<PathBuf>> = HashMap::new();
-
-    for file in files {
-        if let Some(parent) = file.parent() {
-            packages
-                .entry(parent.to_str().unwrap().to_string())
-                .or_default()
-                .push(file);
-        }
-    }
+    let packages: HashMap<String, Vec<PathBuf>> =
+        files.into_iter().fold(HashMap::new(), |mut acc, file| {
+            if let Some(parent) = file.parent() {
+                acc.entry(parent.to_str().unwrap().to_string())
+                    .or_default()
+                    .push(file);
+            }
+            acc
+        });
 
     let found = process_packages(packages, name)?;
 
