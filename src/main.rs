@@ -2,7 +2,7 @@ use clap::Parser;
 use file_utils::collect_files;
 use parser::process_packages;
 use prettytable::print_table;
-use std::{collections::HashMap, path::PathBuf};
+use std::{collections::HashMap, path::PathBuf, time::Instant};
 
 pub mod file_utils;
 pub mod package;
@@ -30,26 +30,19 @@ fn main() -> Result<(), String> {
     let args = Args::parse();
     let path = PathBuf::from(args.path);
     let name = &args.name;
-    let mut dep_files = vec!["Cargo.toml"];
-    if args.deep {
-        dep_files.push("Cargo.lock");
-    }
 
-    let mut files = Vec::new();
-    collect_files(&path, &mut files, &dep_files)?;
+    let mut files = HashMap::new();
+    let start = Instant::now();
+    let mut count = 0;
+    let mut dirs = 0;
+    collect_files(&path, &mut files, args.deep, &mut count, &mut dirs)?;
+    let time = start.elapsed();
+    println!("Elapsed: {:?} {} {}", time, count, dirs);
 
-    let mut packages: HashMap<String, Vec<PathBuf>> = HashMap::new();
-
-    for file in files {
-        if let Some(parent) = file.parent() {
-            packages
-                .entry(parent.to_str().unwrap().to_string())
-                .or_default()
-                .push(file);
-        }
-    }
-
-    let found = process_packages(packages, name)?;
+    let start = Instant::now();
+    let found = process_packages(files, name)?;
+    let time = start.elapsed();
+    println!("Elapsed: {:?}", time);
 
     print_table(
         vec![

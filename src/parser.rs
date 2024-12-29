@@ -2,16 +2,30 @@ use std::{collections::HashMap, fs, path::PathBuf};
 
 use toml::{Table, Value};
 
-use crate::{file_utils::filter_by_extension, package::Package};
+use crate::package::Package;
+
+pub struct PackageFiles {
+    pub ctoml: Option<PathBuf>,
+    pub clock: Option<PathBuf>,
+}
+
+impl Default for PackageFiles {
+    fn default() -> Self {
+        Self {
+            ctoml: Default::default(),
+            clock: Default::default(),
+        }
+    }
+}
 
 pub fn process_packages(
-    packages: HashMap<String, Vec<PathBuf>>,
+    packages: HashMap<String, PackageFiles>,
     dep_name: &str,
 ) -> Result<Vec<Vec<String>>, String> {
     let mut found = Vec::new();
 
     for (_, value) in packages {
-        if let Some(toml) = filter_by_extension(&value, "toml") {
+        if let Some(ref toml) = value.ctoml {
             // Parse .toml
             let toml_file = fs::read_to_string(toml).map_err(|e| e.to_string())?;
             let parsed = parse_toml(
@@ -29,7 +43,7 @@ pub fn process_packages(
             }
 
             // parse .lock
-            if let Some(lock) = filter_by_extension(&value, "lock") {
+            if let Some(ref lock) = value.clock {
                 let lock_file = fs::read_to_string(lock).map_err(|e| e.to_string())?;
                 let parsed = parse_lock(&lock_file, dep_name, lock.to_str().unwrap(), package_name);
                 found.extend(parsed);
@@ -91,7 +105,7 @@ fn parse_toml(contents: &str, dependency_name: &str, path: &str) -> Option<Packa
             }
         }
     } else {
-        println!("Unparseable file: {:?}", value);
+        println!("Unparseable file: {:?}", path);
     }
     None
 }
@@ -123,7 +137,7 @@ fn parse_lock(
             }
         }
     } else {
-        println!("Unparseable file: {:?}", contents);
+        println!("Unparseable file: {:?}", path);
     }
     res
 }

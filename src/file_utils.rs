@@ -1,9 +1,16 @@
-use std::{fs, path::PathBuf};
+use std::{collections::HashMap, fs, path::PathBuf};
+
+use crate::parser::PackageFiles;
+
+const TOML: &str = "Cargo.toml";
+const LOCK: &str = "Cargo.lock";
 
 pub fn collect_files(
     path: &PathBuf,
-    files: &mut Vec<PathBuf>,
-    target_files: &[&str],
+    target: &mut HashMap<String, PackageFiles>,
+    deep: bool,
+    count: &mut u64,
+    dirs: &mut u64,
 ) -> Result<(), String> {
     let entries = fs::read_dir(path).map_err(|e| e.to_string());
 
@@ -12,27 +19,29 @@ pub fn collect_files(
             let entry = entry.map_err(|e| e.to_string())?;
             let path = entry.path();
             if path.is_dir() {
-                collect_files(&path, files, target_files)?;
+                *dirs += 1;
+                collect_files(&path, target, deep, count, dirs)?;
             } else if path.is_file() {
-                let file_name = path.file_name().unwrap().to_str().unwrap();
-                if target_files.contains(&file_name) {
-                    files.push(path);
+                *count += 1;
+                if let Some(parent) = path.parent() {
+                    let parent_str = parent.to_str().unwrap().to_string();
+                    let file_name = path.file_name().unwrap().to_str().unwrap();
+
+                    match file_name {
+                        TOML => {
+                            target.entry(parent_str).or_default().ctoml = Some(path.clone());
+                        }
+                        LOCK if deep => {
+                            target.entry(parent_str).or_default().clock = Some(path.clone());
+                        }
+                        _ => {}
+                    }
                 }
             }
         }
     } else {
-        println!("Cannot access: {:?}", path);
+        eprintln!("Cannot access: {:?}", path);
     }
 
     Ok(())
-}
-
-pub fn filter_by_extension<'a>(files: &'a [PathBuf], target: &'a str) -> Option<&'a PathBuf> {
-    files.iter().find(|path| {
-        if let Some(ext) = path.extension() {
-            ext == target
-        } else {
-            false
-        }
-    })
 }
