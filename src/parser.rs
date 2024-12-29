@@ -1,7 +1,5 @@
 use std::{collections::HashMap, fs, path::PathBuf};
 
-use toml::{Table, Value};
-
 use crate::{
     file_utils::filter_by_extension,
     package::{DependencyInfo, Lock, Toml},
