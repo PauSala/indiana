@@ -1,5 +1,7 @@
 use std::{collections::HashMap, fs, path::PathBuf};
 
+use toml::{Table, Value};
+
 use crate::{file_utils::filter_by_extension, package::Package};
 
 pub fn process_packages(
@@ -12,7 +14,7 @@ pub fn process_packages(
         if let Some(toml) = filter_by_extension(&value, "toml") {
             // Parse .toml
             let toml_file = fs::read_to_string(toml).map_err(|e| e.to_string())?;
-            let parsed = Package::parse_toml(
+            let parsed = parse_toml(
                 &toml_file,
                 dep_name,
                 toml.to_str().expect("Path must be a file"),
@@ -23,14 +25,13 @@ pub fn process_packages(
                 package_name = parsed.name.clone();
                 found.push(parsed);
             } else {
-                package_name = Package::parse_name(&toml_file);
+                package_name = parse_name(&toml_file);
             }
 
             // parse .lock
             if let Some(lock) = filter_by_extension(&value, "lock") {
                 let lock_file = fs::read_to_string(lock).map_err(|e| e.to_string())?;
-                let parsed =
-                    Package::parse_lock(&lock_file, dep_name, lock.to_str().unwrap(), package_name);
+                let parsed = parse_lock(&lock_file, dep_name, lock.to_str().unwrap(), package_name);
                 found.extend(parsed);
             }
         }
@@ -43,4 +44,86 @@ pub fn process_packages(
             res
         })
         .collect())
+}
+
+fn parse_dependency(dep: &Value, package_name: &str, path: &str) -> Package {
+    let version = dep.get("version").unwrap_or(dep);
+
+    Package {
+        name: package_name.to_string(),
+        dep_version: version
+            .as_str()
+            .unwrap_or("Dependency is not a String")
+            .to_string(),
+        path: path.to_owned(),
+    }
+}
+
+fn parse_name(contents: &str) -> String {
+    let value = contents.parse::<Table>();
+    if let Ok(table) = value {
+        table
+            .get("package")
+            .and_then(|pack| pack.get("name"))
+            .and_then(Value::as_str)
+            .unwrap_or("Package name not found")
+            .to_string()
+    } else {
+        "Package name not found".to_string()
+    }
+}
+
+fn parse_toml(contents: &str, dependency_name: &str, path: &str) -> Option<Package> {
+    let value = contents.parse::<Table>();
+
+    if let Ok(table) = value {
+        let package_name = table
+            .get("package")
+            .and_then(|pack| pack.get("name"))
+            .and_then(Value::as_str)
+            .unwrap_or("package name not found");
+
+        for key in ["dependencies", "dep-dependencies"] {
+            if let Some(deps) = table.get(key) {
+                if let Some(dep) = deps.get(dependency_name) {
+                    return Some(parse_dependency(dep, package_name, path));
+                }
+            }
+        }
+    } else {
+        println!("Unparseable file: {:?}", value);
+    }
+    None
+}
+
+fn parse_lock(
+    contents: &str,
+    dependency_name: &str,
+    path: &str,
+    package_name: String,
+) -> Vec<Package> {
+    let mut res = Vec::new();
+    if let Ok(table) = contents.parse::<Table>() {
+        if let Some(Value::Array(packages)) = table.get("package") {
+            for package in packages {
+                if let Some(Value::String(name)) = package.get("name") {
+                    if name == dependency_name {
+                        let version = package
+                            .get("version")
+                            .and_then(Value::as_str)
+                            .unwrap_or("Version not found")
+                            .to_owned();
+                        res.push(Package {
+                            name: package_name.clone(),
+                            dep_version: version,
+                            path: path.to_owned(),
+                        });
+                    }
+                }
+            }
+        }
+    } else {
+        println!("Unparseable file: {:?}", contents);
+    }
+    res
 }
