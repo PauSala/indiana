@@ -1,8 +1,6 @@
-use std::{collections::HashMap, fs, path::PathBuf};
-
-use toml::{Table, Value};
-
 use crate::{file_utils::filter_by_extension, package::Package};
+use std::{collections::HashMap, fs, path::PathBuf};
+use toml::{Table, Value};
 
 pub fn process_packages(
     packages: HashMap<String, Vec<PathBuf>>,
