@@ -1,11 +1,11 @@
 use clap::Parser;
 use file_utils::collect_files;
-use parser::process_packages;
+use hashbrown::HashMap;
+use parser::FileParser;
 use prettytable::print_table;
-use std::{collections::HashMap, path::PathBuf, time::Instant};
+use std::path::PathBuf;
 
 pub mod file_utils;
-pub mod package;
 pub mod parser;
 pub mod prettytable;
 
@@ -32,15 +32,9 @@ fn main() -> Result<(), String> {
     let name = &args.name;
 
     let mut files = HashMap::new();
-    let start = Instant::now();
     collect_files(&path, &mut files, args.deep)?;
-    let time = start.elapsed();
-    println!("Elapsed: {:?}", time);
 
-    let start = Instant::now();
-    let found = process_packages(files, name)?;
-    let time = start.elapsed();
-    println!("Elapsed: {:?}", time);
+    let found = FileParser::new().parse(files, name)?;
 
     print_table(
         vec![

@@ -1,9 +1,11 @@
-use std::{collections::HashMap, fs, path::PathBuf};
+use std::{fs, path::PathBuf};
 
-use crate::parser::PackageFiles;
+use hashbrown::HashMap;
 
-const TOML: &str = "Cargo.toml";
-const LOCK: &str = "Cargo.lock";
+use crate::parser::data::PackageFiles;
+
+pub const TOML: &str = "Cargo.toml";
+pub const LOCK: &str = "Cargo.lock";
 
 pub fn collect_files(
     path: &PathBuf,
@@ -11,10 +13,12 @@ pub fn collect_files(
     deep: bool,
 ) -> Result<(), String> {
     let entries = fs::read_dir(path).map_err(|e| e.to_string());
+
     if let Ok(entries) = entries {
         for entry in entries {
             let entry = entry.map_err(|e| e.to_string())?;
             let path = entry.path();
+
             if path.is_dir() {
                 collect_files(&path, target, deep)?;
             } else if path.is_file() {

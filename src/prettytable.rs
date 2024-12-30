@@ -1,4 +1,6 @@
-pub fn print_table(headers: Vec<&str>, rows: Vec<Vec<String>>) {
+use crate::parser::data::Row;
+
+pub fn print_table(headers: Vec<&str>, rows: Vec<Row>) {
     let mut max = max_non_last_value(&headers, &rows);
 
     let margin = 2;
@@ -19,7 +21,7 @@ pub fn print_table(headers: Vec<&str>, rows: Vec<Vec<String>>) {
     }
 }
 
-fn max_non_last_value(headers: &[&str], rows: &[Vec<String>]) -> usize {
+fn max_non_last_value(headers: &[&str], rows: &[Row]) -> usize {
     let mut max = headers[0..headers.len() - 1]
         .iter()
         .max_by_key(|a| a.len())

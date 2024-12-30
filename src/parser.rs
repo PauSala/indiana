@@ -1,188 +1,177 @@
-use std::{collections::HashMap, fs, path::PathBuf};
+pub mod data;
 
-use serde::Deserialize;
-use toml::{Table, Value};
+use data::{CLockFile, CTomlFile, Dependency, MatchInfo, PackageFiles, Row};
+use hashbrown::HashMap;
+use std::fs;
 
-use crate::package::Row;
+use crate::file_utils::{LOCK, TOML};
 
-pub struct PackageFiles {
-    pub ctoml: Option<PathBuf>,
-    pub clock: Option<PathBuf>,
-}
+#[derive(Default)]
+pub struct FileParser;
 
-impl Default for PackageFiles {
-    fn default() -> Self {
-        Self {
-            ctoml: Default::default(),
-            clock: Default::default(),
-        }
+impl FileParser {
+    pub fn new() -> Self {
+        FileParser
     }
-}
 
-#[derive(Debug, Deserialize)]
-#[serde(untagged)]
-pub enum Dependency {
-    Simple(String),
-    Detailed { version: String },
-}
+    pub fn parse(
+        &self,
+        files: HashMap<String, PackageFiles>,
+        target_dep: &str,
+    ) -> Result<Vec<Row>, String> {
+        let mut found = Vec::new();
 
-#[derive(Debug, Deserialize)]
-pub struct Package {
-    pub name: String,
-    pub version: String,
-    // #[serde(flatten)]
-    // pub dependencies: Option<HashMap<String, Dependency>>,
-}
+        for (_, package) in files {
+            if let Some(ref toml) = package.ctoml {
+                // Parse .toml
+                let toml_file = fs::read_to_string(toml).map_err(|e| e.to_string())?;
+                let parsed = self.parse_toml(
+                    &toml_file,
+                    target_dep,
+                    toml.to_str().expect("Path must be a file"),
+                );
 
-#[derive(Debug, Deserialize)]
-pub struct LockFile {
-    pub package: Vec<Package>,
-}
+                let package_name;
+                if let Some(parsed) = &parsed.iter().find(|e| e.dep_version != "-") {
+                    package_name = parsed.package_name.clone();
+                } else {
+                    package_name = self.parse_name(&toml_file);
+                }
 
-pub fn process_packages(
-    packages: HashMap<String, PackageFiles>,
-    dep_name: &str,
-) -> Result<Vec<Vec<String>>, String> {
-    let mut found = Vec::new();
-
-    for (_, value) in packages {
-        if let Some(ref toml) = value.ctoml {
-            // Parse .toml
-            let toml_file = fs::read_to_string(toml).map_err(|e| e.to_string())?;
-            let parsed = parse_toml(
-                &toml_file,
-                dep_name,
-                toml.to_str().expect("Path must be a file"),
-            );
-
-            let package_name;
-            if let Some(parsed) = parsed {
-                package_name = parsed.name.clone();
-                found.push(parsed);
-            } else {
-                package_name = parse_name(&toml_file);
-            }
-
-            // parse .lock
-            if let Some(ref lock) = value.clock {
-                let lock_file = fs::read_to_string(lock).map_err(|e| e.to_string())?;
-                let parsed = parse_lock(&lock_file, dep_name, lock.to_str().unwrap(), package_name);
                 found.extend(parsed);
-            }
-        }
-    }
-    found.sort_by(|a, b| a.path.cmp(&b.path));
-    Ok(found
-        .into_iter()
-        .map(|package| {
-            let res = vec![package.name, package.dep_version, package.path];
-            res
-        })
-        .collect())
-}
 
-fn parse_dependency(dep: &Value, package_name: &str, path: &str) -> Row {
-    let version = dep.get("version").unwrap_or(dep);
-
-    Row {
-        name: package_name.to_string(),
-        dep_version: version
-            .as_str()
-            .unwrap_or("Dependency is not a String")
-            .to_string(),
-        path: path.to_owned(),
-    }
-}
-
-fn parse_name(contents: &str) -> String {
-    let value = contents.parse::<Table>();
-    if let Ok(table) = value {
-        table
-            .get("package")
-            .and_then(|pack| pack.get("name"))
-            .and_then(Value::as_str)
-            .unwrap_or("Package name not found")
-            .to_string()
-    } else {
-        "Package name not found".to_string()
-    }
-}
-
-fn parse_toml(contents: &str, dependency_name: &str, path: &str) -> Option<Row> {
-    let value = contents.parse::<Table>();
-
-    if let Ok(table) = value {
-        let package_name = table
-            .get("package")
-            .and_then(|pack| pack.get("name"))
-            .and_then(Value::as_str)
-            .unwrap_or("package name not found");
-
-        for key in ["dependencies", "dep-dependencies"] {
-            if let Some(deps) = table.get(key) {
-                if let Some(dep) = deps.get(dependency_name) {
-                    return Some(parse_dependency(dep, package_name, path));
+                // parse .lock
+                if let Some(ref lock) = package.clock {
+                    let lock_file = fs::read_to_string(lock).map_err(|e| e.to_string())?;
+                    let parsed = self.parse_lock(
+                        &lock_file,
+                        target_dep,
+                        lock.to_str().unwrap(),
+                        package_name,
+                    );
+                    found.extend(parsed);
                 }
             }
         }
-    } else {
-        println!("Unparseable file: {:?}", path);
+        found.sort_by(|a, b| a.path.cmp(&b.path));
+        Ok(found
+            .into_iter()
+            .map(|package| {
+                let res: [String; 3] = [package.package_name, package.dep_version, package.path];
+                res
+            })
+            .collect())
     }
-    None
-}
 
-fn parse_lock2(
-    contents: &str,
-    dependency_name: &str,
-    path: &str,
-    package_name: String,
-) -> Vec<Row> {
-    let mut res = Vec::new();
-    let parsed: Result<LockFile, _> = toml::from_str(contents);
-    if let Ok(lock_file) = parsed {
-        for package in lock_file.package {
-            if package.name == dependency_name {
-                res.push(Row {
-                    name: package_name.clone(),
-                    dep_version: package.version,
-                    path: path.to_owned(),
-                });
+    fn parse_toml(&self, contents: &str, target_dep: &str, path: &str) -> Vec<MatchInfo> {
+        let mut res = Vec::new();
+        let parsed: Result<CTomlFile, _> = toml::from_str(contents);
+        if let Ok(toml) = parsed {
+            let package_name = toml
+                .package
+                .map(|package| package.name)
+                .unwrap_or_else(|| "-".to_string());
+
+            for deps in [toml.dependencies, toml.dev_dependencies] {
+                if let Some(found) = self.parse_dependencies(deps, target_dep, path, &package_name)
+                {
+                    res.push(found);
+                }
+            }
+            if let Some(data) = toml.target.and_then(|target| target.targets) {
+                for (_, target) in data {
+                    for deps in [target.dependencies, target.dev_dependencies] {
+                        if let Some(found) =
+                            self.parse_dependencies(deps, target_dep, path, &package_name)
+                        {
+                            res.push(found);
+                        }
+                    }
+                }
+            }
+            return res;
+        } else {
+            match parsed {
+                Ok(_) => (),
+                Err(e) => {
+                    eprintln!("Unparseable file: {:?} {e}", path);
+                }
+            };
+        }
+        res
+    }
+
+    fn parse_lock(
+        &self,
+        contents: &str,
+        dependency_name: &str,
+        path: &str,
+        package_name: String,
+    ) -> Vec<MatchInfo> {
+        let mut res = Vec::new();
+        let parsed: Result<CLockFile, _> = toml::from_str(contents);
+        if let Ok(lock_file) = parsed {
+            for package in lock_file.package {
+                if package.name == dependency_name {
+                    res.push(MatchInfo {
+                        package_name: package_name.clone(),
+                        dep_version: package.version,
+                        path: path.to_owned(),
+                        extension: LOCK.to_string(),
+                    });
+                }
             }
         }
+        res
     }
-    res
-}
 
-fn parse_lock(contents: &str, dependency_name: &str, path: &str, package_name: String) -> Vec<Row> {
-    let mut res = Vec::new();
-    if let Ok(table) = contents.parse::<Table>() {
-        if let Some(Value::Array(packages)) = table.get("package") {
-            for package in packages {
-                if let Some(Value::String(name)) = package.get("name") {
-                    if name == dependency_name {
-                        let version = package
-                            .get("version")
-                            .and_then(Value::as_str)
-                            .unwrap_or("Version not found")
-                            .to_owned();
-                        res.push(Row {
-                            name: package_name.clone(),
-                            dep_version: version,
-                            path: path.to_owned(),
-                        });
+    fn parse_name(&self, contents: &str) -> String {
+        toml::from_str::<CTomlFile>(contents)
+            .ok()
+            .and_then(|toml| toml.package.map(|package| package.name))
+            .unwrap_or_else(|| "-".to_string())
+    }
+
+    fn parse_dependencies(
+        &self,
+        dependencies: Option<HashMap<String, Dependency>>,
+        target_dep: &str,
+        path: &str,
+        package_name: &str,
+    ) -> Option<MatchInfo> {
+        if let Some(dependencies) = dependencies {
+            for (dep_name, dep) in dependencies {
+                if dep_name == target_dep {
+                    match dep {
+                        data::Dependency::Simple(version) => {
+                            return Some(MatchInfo {
+                                package_name: package_name.to_owned(),
+                                dep_version: version,
+                                path: path.to_string(),
+                                extension: TOML.to_string(),
+                            })
+                        }
+                        data::Dependency::Detailed(dependency_details) => {
+                            return Some(MatchInfo {
+                                package_name: package_name.to_owned(),
+                                dep_version: dependency_details.version.unwrap_or("-".to_string()),
+                                path: path.to_string(),
+                                extension: TOML.to_string(),
+                            })
+                        }
                     }
                 }
             }
         }
-    } else {
-        println!("Unparseable file: {:?}", path);
+        None
     }
-    res
 }
 
 #[cfg(test)]
 mod test {
-    use super::LockFile;
+    use toml::Table;
+
+    use crate::parser::data::CLockFile;
 
     #[test]
     fn test_deserialize() {
@@ -212,7 +201,46 @@ mod test {
         ]
         "#;
 
-        let toml: LockFile = toml::from_str(toml_str).unwrap();
+        let toml: CLockFile = toml::from_str(toml_str).unwrap();
+        dbg!(toml);
+    }
+
+    #[test]
+    fn test_deserialize2() {
+        let toml_str = r#"
+            [package]
+            name = "core_simd"
+            version = "0.1.0"
+            edition = "2021"
+            homepage = "https://github.com/rust-lang/portable-simd"
+            repository = "https://github.com/rust-lang/portable-simd"
+            keywords = ["core", "simd", "intrinsics"]
+            categories = ["hardware-support", "no-std"]
+            license = "MIT OR Apache-2.0"
+                
+            [features]
+            default = ["as_crate"]
+            as_crate = []
+            std = []
+            all_lane_counts = []
+                
+            [target.'cfg(target_arch = "wasm32")'.dev-dependencies]
+            wasm-bindgen = "0.2"
+            wasm-bindgen-test = "0.3"
+                
+            [dev-dependencies.proptest]
+            version = "0.10"
+            default-features = false
+            features = ["alloc"]
+                
+            [dev-dependencies.test_helpers]
+            path = "../test_helpers"
+                
+            [dev-dependencies]
+            std_float = { path = "../std_float/", features = ["as_crate"] }
+        "#;
+
+        let toml: Table = toml::from_str(toml_str).unwrap();
         dbg!(toml);
     }
 }
