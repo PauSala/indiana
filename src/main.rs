@@ -34,7 +34,7 @@ fn main() -> ExitCode {
 }
 
 fn explore(args: Args) -> Result<Vec<FoundDependency>, error::MoleError> {
-    // Container for all explored files mathing the dependency
+    // Container for all explored files matching given dependency
     let mut files = hashbrown::HashMap::new();
 
     file_explorer::collect_files(&args.path, &mut files, args.deep)?;
