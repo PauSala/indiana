@@ -9,3 +9,8 @@ hashbrown = {version = "0.15.2",  features = ["serde"]}
 serde = {version = "1.0.217", features = ["derive"]}
 thiserror = "2.0.9"
 toml = "0.8.19"
+
+
+[profile.release]
+lto = true
+codegen-units = 1
