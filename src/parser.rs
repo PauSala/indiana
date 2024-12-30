@@ -1,6 +1,6 @@
 pub mod data;
 
-use data::{CLockFile, CTomlFile, Dependency, MatchInfo, PackageFiles, Row};
+use data::{CLockFile, CTomlFile, Dependency, FoundDependency, PackageFiles, Row};
 use hashbrown::HashMap;
 use std::fs;
 
@@ -28,11 +28,11 @@ impl FileParser {
                 let parsed = self.parse_toml(
                     &toml_file,
                     target_dep,
-                    toml.to_str().expect("Path must be a file"),
+                    toml.to_str().expect("Path should be a file"),
                 );
 
                 let package_name;
-                if let Some(parsed) = &parsed.iter().find(|e| e.dep_version != "-") {
+                if let Some(parsed) = &parsed.iter().next() {
                     package_name = parsed.package_name.clone();
                 } else {
                     package_name = self.parse_name(&toml_file);
@@ -63,7 +63,7 @@ impl FileParser {
             .collect())
     }
 
-    fn parse_toml(&self, contents: &str, target_dep: &str, path: &str) -> Vec<MatchInfo> {
+    fn parse_toml(&self, contents: &str, target_dep: &str, path: &str) -> Vec<FoundDependency> {
         let mut res = Vec::new();
         let parsed: Result<CTomlFile, _> = toml::from_str(contents);
         if let Ok(toml) = parsed {
@@ -107,13 +107,13 @@ impl FileParser {
         dependency_name: &str,
         path: &str,
         package_name: String,
-    ) -> Vec<MatchInfo> {
+    ) -> Vec<FoundDependency> {
         let mut res = Vec::new();
         let parsed: Result<CLockFile, _> = toml::from_str(contents);
         if let Ok(lock_file) = parsed {
             for package in lock_file.package {
                 if package.name == dependency_name {
-                    res.push(MatchInfo {
+                    res.push(FoundDependency {
                         package_name: package_name.clone(),
                         dep_version: package.version,
                         path: path.to_owned(),
@@ -138,13 +138,13 @@ impl FileParser {
         target_dep: &str,
         path: &str,
         package_name: &str,
-    ) -> Option<MatchInfo> {
+    ) -> Option<FoundDependency> {
         if let Some(dependencies) = dependencies {
             for (dep_name, dep) in dependencies {
                 if dep_name == target_dep {
                     match dep {
                         data::Dependency::Simple(version) => {
-                            return Some(MatchInfo {
+                            return Some(FoundDependency {
                                 package_name: package_name.to_owned(),
                                 dep_version: version,
                                 path: path.to_string(),
@@ -152,7 +152,7 @@ impl FileParser {
                             })
                         }
                         data::Dependency::Detailed(dependency_details) => {
-                            return Some(MatchInfo {
+                            return Some(FoundDependency {
                                 package_name: package_name.to_owned(),
                                 dep_version: dependency_details.version.unwrap_or("-".to_string()),
                                 path: path.to_string(),
@@ -169,9 +169,8 @@ impl FileParser {
 
 #[cfg(test)]
 mod test {
-    use toml::Table;
 
-    use crate::parser::data::CLockFile;
+    use crate::parser::data::{CLockFile, CTomlFile};
 
     #[test]
     fn test_deserialize() {
@@ -240,7 +239,7 @@ mod test {
             std_float = { path = "../std_float/", features = ["as_crate"] }
         "#;
 
-        let toml: Table = toml::from_str(toml_str).unwrap();
+        let toml: CTomlFile = toml::from_str(toml_str).unwrap();
         dbg!(toml);
     }
 }

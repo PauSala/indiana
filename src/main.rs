@@ -34,7 +34,7 @@ fn main() -> Result<(), String> {
     let mut files = HashMap::new();
     collect_files(&path, &mut files, args.deep)?;
 
-    let found = FileParser::new().parse(files, name)?;
+    let parsed_deps = FileParser::new().parse(files, name)?;
 
     print_table(
         vec![
@@ -42,7 +42,7 @@ fn main() -> Result<(), String> {
             &format!("{} VERSION", args.name.to_ascii_uppercase()),
             "PATH",
         ],
-        found,
+        parsed_deps,
     );
 
     Ok(())

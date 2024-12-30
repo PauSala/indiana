@@ -3,7 +3,7 @@ use serde::Deserialize;
 use std::path::PathBuf;
 
 #[derive(Debug, Clone)]
-pub struct MatchInfo {
+pub struct FoundDependency {
     pub package_name: String,
     pub dep_version: String,
     pub extension: String,
