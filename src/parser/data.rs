@@ -1,21 +1,11 @@
 use hashbrown::HashMap;
 use serde::Deserialize;
-use std::path::PathBuf;
 
 #[derive(Debug, Clone)]
 pub struct FoundDependency {
     pub package_name: String,
     pub dep_version: String,
-    pub extension: String,
     pub path: String,
-}
-
-pub type Row = [String; 3];
-
-#[derive(Default)]
-pub struct PackageFiles {
-    pub ctoml: Option<PathBuf>,
-    pub clock: Option<PathBuf>,
 }
 
 #[derive(Debug, Deserialize)]

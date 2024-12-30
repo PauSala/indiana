@@ -1,4 +1,4 @@
-use crate::parser::data::Row;
+pub type Row = [String; 3];
 
 pub fn print_table(headers: Vec<&str>, rows: Vec<Row>) {
     let mut max = max_non_last_value(&headers, &rows);

@@ -1,49 +1,45 @@
-use clap::Parser;
-use file_utils::collect_files;
-use hashbrown::HashMap;
-use parser::FileParser;
-use prettytable::print_table;
-use std::path::PathBuf;
-
-pub mod file_utils;
+pub mod cli;
+pub mod error;
+pub mod file_explorer;
 pub mod parser;
-pub mod prettytable;
+pub mod printer;
 
-/// Searches for a specified cargo dependency in all projects within a given directory.
-#[derive(Parser, Debug)]
-#[command(version, about, long_about = None)]
-struct Args {
-    /// The name of the dependency to search for.
-    #[arg(short, long)]
-    name: String,
+use clap::Parser;
+use cli::Args;
+use error::MoleError;
+use file_explorer::collect_files;
+use hashbrown::HashMap;
+use parser::data::FoundDependency;
+use printer::pretty_table::print_table;
+use std::process::ExitCode;
 
-    /// The directory to search in. Defaults to the current directory.
-    #[arg(short, long, default_value = ".")]
-    path: String,
+fn main() -> ExitCode {
+    let args = Args::parse();
 
-    /// Flag to indicate whether to search for the dependency in Cargo.lock as well.
-    #[arg(short, long, default_value_t = false)]
-    deep: bool,
+    match explore(args) {
+        Err(e) => {
+            eprintln!("{}", e);
+            ExitCode::FAILURE
+        }
+        Ok(deps) => {
+            let parsed_deps = deps
+                .into_iter()
+                .map(|package| {
+                    let res: [String; 3] =
+                        [package.package_name, package.dep_version, package.path];
+                    res
+                })
+                .collect();
+            print_table(vec!["PACKAGE", "VERSION", "PATH"], parsed_deps);
+            ExitCode::SUCCESS
+        }
+    }
 }
 
-fn main() -> Result<(), String> {
-    let args = Args::parse();
-    let path = PathBuf::from(args.path);
-    let name = &args.name;
-
+fn explore(args: Args) -> Result<Vec<FoundDependency>, MoleError> {
+    // Container for all explored files mathing the dependency
     let mut files = HashMap::new();
-    collect_files(&path, &mut files, args.deep)?;
 
-    let parsed_deps = FileParser::new().parse(files, name)?;
-
-    print_table(
-        vec![
-            "PACKAGE",
-            &format!("{} VERSION", args.name.to_ascii_uppercase()),
-            "PATH",
-        ],
-        parsed_deps,
-    );
-
-    Ok(())
+    collect_files(&args.path, &mut files, args.deep)?;
+    parser::FileParser::new().parse(files, &args.name)
 }

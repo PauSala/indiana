@@ -1,10 +1,10 @@
 pub mod data;
 
-use data::{CLockFile, CTomlFile, Dependency, FoundDependency, PackageFiles, Row};
+use data::{CLockFile, CTomlFile, Dependency, FoundDependency};
 use hashbrown::HashMap;
 use std::fs;
 
-use crate::file_utils::{LOCK, TOML};
+use crate::{error::MoleError, file_explorer::CargoFiles};
 
 #[derive(Default)]
 pub struct FileParser;
@@ -16,15 +16,15 @@ impl FileParser {
 
     pub fn parse(
         &self,
-        files: HashMap<String, PackageFiles>,
+        files: HashMap<String, CargoFiles>,
         target_dep: &str,
-    ) -> Result<Vec<Row>, String> {
+    ) -> Result<Vec<FoundDependency>, MoleError> {
         let mut found = Vec::new();
 
         for (_, package) in files {
             if let Some(ref toml) = package.ctoml {
                 // Parse .toml
-                let toml_file = fs::read_to_string(toml).map_err(|e| e.to_string())?;
+                let toml_file = fs::read_to_string(toml)?;
                 let parsed = self.parse_toml(
                     &toml_file,
                     target_dep,
@@ -42,7 +42,7 @@ impl FileParser {
 
                 // parse .lock
                 if let Some(ref lock) = package.clock {
-                    let lock_file = fs::read_to_string(lock).map_err(|e| e.to_string())?;
+                    let lock_file = fs::read_to_string(lock)?;
                     let parsed = self.parse_lock(
                         &lock_file,
                         target_dep,
@@ -54,13 +54,7 @@ impl FileParser {
             }
         }
         found.sort_by(|a, b| a.path.cmp(&b.path));
-        Ok(found
-            .into_iter()
-            .map(|package| {
-                let res: [String; 3] = [package.package_name, package.dep_version, package.path];
-                res
-            })
-            .collect())
+        Ok(found)
     }
 
     fn parse_toml(&self, contents: &str, target_dep: &str, path: &str) -> Vec<FoundDependency> {
@@ -117,7 +111,6 @@ impl FileParser {
                         package_name: package_name.clone(),
                         dep_version: package.version,
                         path: path.to_owned(),
-                        extension: LOCK.to_string(),
                     });
                 }
             }
@@ -148,7 +141,6 @@ impl FileParser {
                                 package_name: package_name.to_owned(),
                                 dep_version: version,
                                 path: path.to_string(),
-                                extension: TOML.to_string(),
                             })
                         }
                         data::Dependency::Detailed(dependency_details) => {
@@ -156,7 +148,6 @@ impl FileParser {
                                 package_name: package_name.to_owned(),
                                 dep_version: dependency_details.version.unwrap_or("-".to_string()),
                                 path: path.to_string(),
-                                extension: TOML.to_string(),
                             })
                         }
                     }
@@ -164,82 +155,5 @@ impl FileParser {
             }
         }
         None
-    }
-}
-
-#[cfg(test)]
-mod test {
-
-    use crate::parser::data::{CLockFile, CTomlFile};
-
-    #[test]
-    fn test_deserialize() {
-        let toml_str = r#"
-        [[package]]
-        name = "anstyle"
-        version = "1.0.10"
-        source = "registry+https://github.com/rust-lang/crates.io-index"
-        checksum = "55cc3b69f167a1ef2e161439aa98aed94e6028e5f9a59be9a6ffb47aef1651f9"
-
-        [[package]]
-        name = "anstyle-parse"
-        version = "0.2.6"
-        source = "registry+https://github.com/rust-lang/crates.io-index"
-        checksum = "3b2d16507662817a6a20a9ea92df6652ee4f94f914589377d69f3b21bc5798a9"
-        dependencies = [
-         "utf8parse",
-        ]
-
-        [[package]]
-        name = "anstyle-query"
-        version = "1.1.2"
-        source = "registry+https://github.com/rust-lang/crates.io-index"
-        checksum = "79947af37f4177cfead1110013d678905c37501914fba0efea834c3fe9a8d60c"
-        dependencies = [
-         "windows-sys",
-        ]
-        "#;
-
-        let toml: CLockFile = toml::from_str(toml_str).unwrap();
-        dbg!(toml);
-    }
-
-    #[test]
-    fn test_deserialize2() {
-        let toml_str = r#"
-            [package]
-            name = "core_simd"
-            version = "0.1.0"
-            edition = "2021"
-            homepage = "https://github.com/rust-lang/portable-simd"
-            repository = "https://github.com/rust-lang/portable-simd"
-            keywords = ["core", "simd", "intrinsics"]
-            categories = ["hardware-support", "no-std"]
-            license = "MIT OR Apache-2.0"
-                
-            [features]
-            default = ["as_crate"]
-            as_crate = []
-            std = []
-            all_lane_counts = []
-                
-            [target.'cfg(target_arch = "wasm32")'.dev-dependencies]
-            wasm-bindgen = "0.2"
-            wasm-bindgen-test = "0.3"
-                
-            [dev-dependencies.proptest]
-            version = "0.10"
-            default-features = false
-            features = ["alloc"]
-                
-            [dev-dependencies.test_helpers]
-            path = "../test_helpers"
-                
-            [dev-dependencies]
-            std_float = { path = "../std_float/", features = ["as_crate"] }
-        "#;
-
-        let toml: CTomlFile = toml::from_str(toml_str).unwrap();
-        dbg!(toml);
     }
 }

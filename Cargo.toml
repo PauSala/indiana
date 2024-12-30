@@ -1,5 +1,5 @@
 [package]
-name = "indiana"
+name = "mole"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,4 +7,5 @@ edition = "2021"
 clap = { version = "4.5.23", features = ["derive"] }
 hashbrown = {version = "0.15.2",  features = ["serde"]}
 serde = {version = "1.0.217", features = ["derive"]}
+thiserror = "2.0.9"
 toml = "0.8.19"
