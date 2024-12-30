@@ -1,10 +1,12 @@
 pub mod data;
 
+use crate::{error::MoleError, file_explorer::CargoFiles};
 use data::{CLockFile, CTomlFile, Dependency, FoundDependency};
 use hashbrown::HashMap;
 use std::fs;
 
-use crate::{error::MoleError, file_explorer::CargoFiles};
+static DEFAULT_PACKAGE_NAME: &str = "-";
+static DEFAULT_VERSION: &str = "-";
 
 #[derive(Default)]
 pub struct FileParser;
@@ -32,7 +34,10 @@ impl FileParser {
                 );
 
                 let package_name;
-                if let Some(parsed) = &parsed.iter().next() {
+                if let Some(parsed) = &parsed
+                    .iter()
+                    .find(|p| p.package_name != DEFAULT_PACKAGE_NAME)
+                {
                     package_name = parsed.package_name.clone();
                 } else {
                     package_name = self.parse_name(&toml_file);
@@ -64,7 +69,7 @@ impl FileParser {
             let package_name = toml
                 .package
                 .map(|package| package.name)
-                .unwrap_or_else(|| "-".to_string());
+                .unwrap_or_else(|| DEFAULT_PACKAGE_NAME.to_string());
 
             for deps in [toml.dependencies, toml.dev_dependencies] {
                 if let Some(found) = self.parse_dependencies(deps, target_dep, path, &package_name)
@@ -122,7 +127,7 @@ impl FileParser {
         toml::from_str::<CTomlFile>(contents)
             .ok()
             .and_then(|toml| toml.package.map(|package| package.name))
-            .unwrap_or_else(|| "-".to_string())
+            .unwrap_or_else(|| DEFAULT_PACKAGE_NAME.to_string())
     }
 
     fn parse_dependencies(
@@ -135,22 +140,17 @@ impl FileParser {
         if let Some(dependencies) = dependencies {
             for (dep_name, dep) in dependencies {
                 if dep_name == target_dep {
-                    match dep {
-                        data::Dependency::Simple(version) => {
-                            return Some(FoundDependency {
-                                package_name: package_name.to_owned(),
-                                dep_version: version,
-                                path: path.to_string(),
-                            })
-                        }
-                        data::Dependency::Detailed(dependency_details) => {
-                            return Some(FoundDependency {
-                                package_name: package_name.to_owned(),
-                                dep_version: dependency_details.version.unwrap_or("-".to_string()),
-                                path: path.to_string(),
-                            })
-                        }
-                    }
+                    let version = match dep {
+                        data::Dependency::Simple(version) => version,
+                        data::Dependency::Detailed(dependency_details) => dependency_details
+                            .version
+                            .unwrap_or(DEFAULT_VERSION.to_string()),
+                    };
+                    return Some(FoundDependency {
+                        package_name: package_name.to_owned(),
+                        dep_version: version,
+                        path: path.to_string(),
+                    });
                 }
             }
         }
