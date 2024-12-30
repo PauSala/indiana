@@ -6,9 +6,6 @@ pub mod printer;
 
 use clap::Parser;
 use cli::Args;
-use error::MoleError;
-use file_explorer::collect_files;
-use hashbrown::HashMap;
 use parser::data::FoundDependency;
 use printer::pretty_table::print_table;
 use std::process::ExitCode;
@@ -36,10 +33,10 @@ fn main() -> ExitCode {
     }
 }
 
-fn explore(args: Args) -> Result<Vec<FoundDependency>, MoleError> {
+fn explore(args: Args) -> Result<Vec<FoundDependency>, error::MoleError> {
     // Container for all explored files mathing the dependency
-    let mut files = HashMap::new();
+    let mut files = hashbrown::HashMap::new();
 
-    collect_files(&args.path, &mut files, args.deep)?;
+    file_explorer::collect_files(&args.path, &mut files, args.deep)?;
     parser::FileParser::new().parse(files, &args.name)
 }
