@@ -1,8 +1,9 @@
 use std::{collections::HashMap, fs, path::PathBuf};
 
+use serde::Deserialize;
 use toml::{Table, Value};
 
-use crate::package::Package;
+use crate::package::Row;
 
 pub struct PackageFiles {
     pub ctoml: Option<PathBuf>,
@@ -16,6 +17,26 @@ impl Default for PackageFiles {
             clock: Default::default(),
         }
     }
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum Dependency {
+    Simple(String),
+    Detailed { version: String },
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Package {
+    pub name: String,
+    pub version: String,
+    // #[serde(flatten)]
+    // pub dependencies: Option<HashMap<String, Dependency>>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct LockFile {
+    pub package: Vec<Package>,
 }
 
 pub fn process_packages(
@@ -60,10 +81,10 @@ pub fn process_packages(
         .collect())
 }
 
-fn parse_dependency(dep: &Value, package_name: &str, path: &str) -> Package {
+fn parse_dependency(dep: &Value, package_name: &str, path: &str) -> Row {
     let version = dep.get("version").unwrap_or(dep);
 
-    Package {
+    Row {
         name: package_name.to_string(),
         dep_version: version
             .as_str()
@@ -87,7 +108,7 @@ fn parse_name(contents: &str) -> String {
     }
 }
 
-fn parse_toml(contents: &str, dependency_name: &str, path: &str) -> Option<Package> {
+fn parse_toml(contents: &str, dependency_name: &str, path: &str) -> Option<Row> {
     let value = contents.parse::<Table>();
 
     if let Ok(table) = value {
@@ -110,12 +131,29 @@ fn parse_toml(contents: &str, dependency_name: &str, path: &str) -> Option<Packa
     None
 }
 
-fn parse_lock(
+fn parse_lock2(
     contents: &str,
     dependency_name: &str,
     path: &str,
     package_name: String,
-) -> Vec<Package> {
+) -> Vec<Row> {
+    let mut res = Vec::new();
+    let parsed: Result<LockFile, _> = toml::from_str(contents);
+    if let Ok(lock_file) = parsed {
+        for package in lock_file.package {
+            if package.name == dependency_name {
+                res.push(Row {
+                    name: package_name.clone(),
+                    dep_version: package.version,
+                    path: path.to_owned(),
+                });
+            }
+        }
+    }
+    res
+}
+
+fn parse_lock(contents: &str, dependency_name: &str, path: &str, package_name: String) -> Vec<Row> {
     let mut res = Vec::new();
     if let Ok(table) = contents.parse::<Table>() {
         if let Some(Value::Array(packages)) = table.get("package") {
@@ -127,7 +165,7 @@ fn parse_lock(
                             .and_then(Value::as_str)
                             .unwrap_or("Version not found")
                             .to_owned();
-                        res.push(Package {
+                        res.push(Row {
                             name: package_name.clone(),
                             dep_version: version,
                             path: path.to_owned(),
@@ -140,4 +178,41 @@ fn parse_lock(
         println!("Unparseable file: {:?}", path);
     }
     res
+}
+
+#[cfg(test)]
+mod test {
+    use super::LockFile;
+
+    #[test]
+    fn test_deserialize() {
+        let toml_str = r#"
+        [[package]]
+        name = "anstyle"
+        version = "1.0.10"
+        source = "registry+https://github.com/rust-lang/crates.io-index"
+        checksum = "55cc3b69f167a1ef2e161439aa98aed94e6028e5f9a59be9a6ffb47aef1651f9"
+
+        [[package]]
+        name = "anstyle-parse"
+        version = "0.2.6"
+        source = "registry+https://github.com/rust-lang/crates.io-index"
+        checksum = "3b2d16507662817a6a20a9ea92df6652ee4f94f914589377d69f3b21bc5798a9"
+        dependencies = [
+         "utf8parse",
+        ]
+
+        [[package]]
+        name = "anstyle-query"
+        version = "1.1.2"
+        source = "registry+https://github.com/rust-lang/crates.io-index"
+        checksum = "79947af37f4177cfead1110013d678905c37501914fba0efea834c3fe9a8d60c"
+        dependencies = [
+         "windows-sys",
+        ]
+        "#;
+
+        let toml: LockFile = toml::from_str(toml_str).unwrap();
+        dbg!(toml);
+    }
 }

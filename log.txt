@@ -1,0 +1,37 @@
+Elapsed: 19.973326834s
+Elapsed: 26.326333ms
+PACKAGE                 PROC-MACRO2 VERSION     PATH                    
+anstream                1.0.89                  /Users/pausala/.cargo/registry/src/index.crates.io-6f17d22bba15001f/anstream-0.6.18/Cargo.lock
+anstyle-parse           1.0.81                  /Users/pausala/.cargo/registry/src/index.crates.io-6f17d22bba15001f/anstyle-parse-0.2.6/Cargo.lock
+clap                    1.0.86                  /Users/pausala/.cargo/registry/src/index.crates.io-6f17d22bba15001f/clap-4.5.23/Cargo.lock
+clap_derive             1.0.69                  /Users/pausala/.cargo/registry/src/index.crates.io-6f17d22bba15001f/clap_derive-4.5.18/Cargo.toml
+crossbeam-epoch         1.0.76                  /Users/pausala/.cargo/registry/src/index.crates.io-6f17d22bba15001f/crossbeam-epoch-0.9.18/Cargo.lock
+hashbrown               1.0.78                  /Users/pausala/.cargo/registry/src/index.crates.io-6f17d22bba15001f/hashbrown-0.15.2/Cargo.lock
+proc-macro2             1.0.91                  /Users/pausala/.cargo/registry/src/index.crates.io-6f17d22bba15001f/proc-macro2-1.0.92/Cargo.lock
+proc-macro2             1.0.92                  /Users/pausala/.cargo/registry/src/index.crates.io-6f17d22bba15001f/proc-macro2-1.0.92/Cargo.lock
+quote                   1.0.92                  /Users/pausala/.cargo/registry/src/index.crates.io-6f17d22bba15001f/quote-1.0.38/Cargo.lock
+quote                   1.0.80                  /Users/pausala/.cargo/registry/src/index.crates.io-6f17d22bba15001f/quote-1.0.38/Cargo.toml
+rand                    1.0.36                  /Users/pausala/.cargo/registry/src/index.crates.io-6f17d22bba15001f/rand-0.8.5/Cargo.lock
+serde                   1.0.92                  /Users/pausala/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-1.0.217/Cargo.lock
+serde_derive            1.0.92                  /Users/pausala/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde_derive-1.0.217/Cargo.lock
+serde_derive            1.0.74                  /Users/pausala/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde_derive-1.0.217/Cargo.toml
+syn                     1.0.92                  /Users/pausala/.cargo/registry/src/index.crates.io-6f17d22bba15001f/syn-2.0.92/Cargo.lock
+syn                     1.0.91                  /Users/pausala/.cargo/registry/src/index.crates.io-6f17d22bba15001f/syn-2.0.92/Cargo.toml
+toml                    1.0.82                  /Users/pausala/.cargo/registry/src/index.crates.io-6f17d22bba15001f/toml-0.8.19/Cargo.lock
+toml_edit               1.0.82                  /Users/pausala/.cargo/registry/src/index.crates.io-6f17d22bba15001f/toml_edit-0.22.22/Cargo.lock
+unicode-ident           1.0.89                  /Users/pausala/.cargo/registry/src/index.crates.io-6f17d22bba15001f/unicode-ident-1.0.14/Cargo.lock
+winnow                  1.0.81                  /Users/pausala/.cargo/registry/src/index.crates.io-6f17d22bba15001f/winnow-0.6.20/Cargo.lock
+backtrace               1.0.85                  /Users/pausala/.rustup/toolchains/stable-aarch64-apple-darwin/lib/rustlib/src/rust/library/backtrace/Cargo.lock
+Package name not found  1.0.66                  /Users/pausala/.rustup/toolchains/stable-aarch64-apple-darwin/lib/rustlib/src/rust/library/portable-simd/Cargo.lock
+assert-instr-macro      1.0                     /Users/pausala/.rustup/toolchains/stable-aarch64-apple-darwin/lib/rustlib/src/rust/library/stdarch/crates/assert-instr-macro/Cargo.toml
+simd-test-macro         1.0                     /Users/pausala/.rustup/toolchains/stable-aarch64-apple-darwin/lib/rustlib/src/rust/library/stdarch/crates/simd-test-macro/Cargo.toml
+explore_audio           1.0.92                  /Users/pausala/dev/explore_audio/Cargo.lock
+indiana                 1.0.92                  /Users/pausala/dev/indiana/Cargo.lock
+proc-macro-workshop     1.0.89                  /Users/pausala/dev/learn_rust/proc-macro-workshop/Cargo.lock
+derive_builder          1.0.87                  /Users/pausala/dev/learn_rust/proc-macro-workshop/builder/Cargo.toml
+derive_debug            1.0.87                  /Users/pausala/dev/learn_rust/proc-macro-workshop/debug/Cargo.toml
+derive_builder-tests    1.0.89                  /Users/pausala/dev/learn_rust/proc-macro-workshop/target/tests/trybuild/derive_builder/Cargo.lock
+derive_builder-tests    1.0.87                  /Users/pausala/dev/learn_rust/proc-macro-workshop/target/tests/trybuild/derive_builder/Cargo.toml
+derive_debug-tests      1.0.89                  /Users/pausala/dev/learn_rust/proc-macro-workshop/target/tests/trybuild/derive_debug/Cargo.lock
+derive_debug-tests      1.0.87                  /Users/pausala/dev/learn_rust/proc-macro-workshop/target/tests/trybuild/derive_debug/Cargo.toml
+sudoku_solver           1.0.92                  /Users/pausala/dev/sudoku_solver/Cargo.lock
