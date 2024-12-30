@@ -9,20 +9,15 @@ pub fn collect_files(
     path: &PathBuf,
     target: &mut HashMap<String, PackageFiles>,
     deep: bool,
-    count: &mut u64,
-    dirs: &mut u64,
 ) -> Result<(), String> {
     let entries = fs::read_dir(path).map_err(|e| e.to_string());
-
     if let Ok(entries) = entries {
         for entry in entries {
             let entry = entry.map_err(|e| e.to_string())?;
             let path = entry.path();
             if path.is_dir() {
-                *dirs += 1;
-                collect_files(&path, target, deep, count, dirs)?;
+                collect_files(&path, target, deep)?;
             } else if path.is_file() {
-                *count += 1;
                 if let Some(parent) = path.parent() {
                     let parent_str = parent.to_str().unwrap().to_string();
                     let file_name = path.file_name().unwrap().to_str().unwrap();

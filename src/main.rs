@@ -33,11 +33,9 @@ fn main() -> Result<(), String> {
 
     let mut files = HashMap::new();
     let start = Instant::now();
-    let mut count = 0;
-    let mut dirs = 0;
-    collect_files(&path, &mut files, args.deep, &mut count, &mut dirs)?;
+    collect_files(&path, &mut files, args.deep)?;
     let time = start.elapsed();
-    println!("Elapsed: {:?} {} {}", time, count, dirs);
+    println!("Elapsed: {:?}", time);
 
     let start = Instant::now();
     let found = process_packages(files, name)?;
