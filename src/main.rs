@@ -6,7 +6,7 @@ pub mod printer;
 
 use clap::Parser;
 use cli::Args;
-use parser::data::FoundDependency;
+use parser::data::OutputRow;
 use printer::pretty_table::print_table;
 use std::process::ExitCode;
 
@@ -33,7 +33,7 @@ fn main() -> ExitCode {
     }
 }
 
-fn explore(args: Args) -> Result<Vec<FoundDependency>, error::MoleError> {
+fn explore(args: Args) -> Result<Vec<OutputRow>, error::MoleError> {
     // Container for all explored files matching given dependency
     let mut files = hashbrown::HashMap::new();
 

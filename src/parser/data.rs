@@ -2,7 +2,7 @@ use hashbrown::HashMap;
 use serde::Deserialize;
 
 #[derive(Debug, Clone)]
-pub struct FoundDependency {
+pub struct OutputRow {
     pub package_name: String,
     pub dep_version: String,
     pub path: String,
@@ -72,7 +72,6 @@ mod test {
 
         [dev-dependencies]
         io = "1.0"
-    
         "#;
 
         let parsed: CTomlFile = toml::from_str(toml_content).unwrap();

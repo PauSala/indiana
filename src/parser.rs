@@ -1,7 +1,7 @@
 pub mod data;
 
 use crate::{error::MoleError, file_explorer::CargoFiles};
-use data::{CLockFile, CTomlFile, Dependency, FoundDependency};
+use data::{CLockFile, CTomlFile, Dependency, OutputRow};
 use hashbrown::HashMap;
 use std::fs;
 
@@ -20,7 +20,7 @@ impl FileParser {
         &self,
         files: HashMap<String, CargoFiles>,
         target_dep: &str,
-    ) -> Result<Vec<FoundDependency>, MoleError> {
+    ) -> Result<Vec<OutputRow>, MoleError> {
         let mut found = Vec::new();
 
         for (_, package) in files {
@@ -62,7 +62,7 @@ impl FileParser {
         Ok(found)
     }
 
-    fn parse_toml(&self, contents: &str, target_dep: &str, path: &str) -> Vec<FoundDependency> {
+    fn parse_toml(&self, contents: &str, target_dep: &str, path: &str) -> Vec<OutputRow> {
         let mut res = Vec::new();
         let parsed: Result<CTomlFile, _> = toml::from_str(contents);
         if let Ok(toml) = parsed {
@@ -106,13 +106,13 @@ impl FileParser {
         dependency_name: &str,
         path: &str,
         package_name: String,
-    ) -> Vec<FoundDependency> {
+    ) -> Vec<OutputRow> {
         let mut res = Vec::new();
         let parsed: Result<CLockFile, _> = toml::from_str(contents);
         if let Ok(lock_file) = parsed {
             for package in lock_file.package {
                 if package.name == dependency_name {
-                    res.push(FoundDependency {
+                    res.push(OutputRow {
                         package_name: package_name.clone(),
                         dep_version: package.version,
                         path: path.to_owned(),
@@ -136,7 +136,7 @@ impl FileParser {
         target_dep: &str,
         path: &str,
         package_name: &str,
-    ) -> Option<FoundDependency> {
+    ) -> Option<OutputRow> {
         if let Some(dependencies) = dependencies {
             for (dep_name, dep) in dependencies {
                 if dep_name == target_dep {
@@ -146,7 +146,7 @@ impl FileParser {
                             .version
                             .unwrap_or(DEFAULT_VERSION.to_string()),
                     };
-                    return Some(FoundDependency {
+                    return Some(OutputRow {
                         package_name: package_name.to_owned(),
                         dep_version: version,
                         path: path.to_string(),
