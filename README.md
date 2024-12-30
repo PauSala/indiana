@@ -1,6 +1,6 @@
 # Mole
 
-```bash
+```console
 Searches for a specified cargo dependency in all projects within a given directory
 
 Usage: mole [OPTIONS] --name <NAME>
