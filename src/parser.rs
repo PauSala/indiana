@@ -65,37 +65,36 @@ impl FileParser {
     fn parse_toml(&self, contents: &str, target_dep: &str, path: &str) -> Vec<OutputRow> {
         let mut res = Vec::new();
         let parsed: Result<CTomlFile, _> = toml::from_str(contents);
-        if let Ok(toml) = parsed {
-            let package_name = toml
-                .package
-                .map(|package| package.name)
-                .unwrap_or_else(|| DEFAULT_PACKAGE_NAME.to_string());
+        match parsed {
+            Ok(toml) => {
+                let package_name = toml
+                    .package
+                    .map(|package| package.name)
+                    .unwrap_or_else(|| DEFAULT_PACKAGE_NAME.to_string());
 
-            for deps in [toml.dependencies, toml.dev_dependencies] {
-                if let Some(found) = self.parse_dependencies(deps, target_dep, path, &package_name)
-                {
-                    res.push(found);
+                for deps in [toml.dependencies, toml.dev_dependencies] {
+                    if let Some(found) =
+                        self.parse_dependencies(deps, target_dep, path, &package_name)
+                    {
+                        res.push(found);
+                    }
                 }
-            }
-            if let Some(data) = toml.target.and_then(|target| target.targets) {
-                for (_, target) in data {
-                    for deps in [target.dependencies, target.dev_dependencies] {
-                        if let Some(found) =
-                            self.parse_dependencies(deps, target_dep, path, &package_name)
-                        {
-                            res.push(found);
+                if let Some(data) = toml.target.and_then(|target| target.targets) {
+                    for (_, target) in data {
+                        for deps in [target.dependencies, target.dev_dependencies] {
+                            if let Some(found) =
+                                self.parse_dependencies(deps, target_dep, path, &package_name)
+                            {
+                                res.push(found);
+                            }
                         }
                     }
                 }
+                return res;
             }
-            return res;
-        } else {
-            match parsed {
-                Ok(_) => (),
-                Err(e) => {
-                    eprintln!("Unparseable file: {:?} {e}", path);
-                }
-            };
+            Err(e) => {
+                eprintln!("Unparseable file: {:?} {e}", path);
+            }
         }
         res
     }
