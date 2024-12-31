@@ -65,7 +65,10 @@ pub fn explore(
                         path.file_name().and_then(|f| f.to_str()),
                     ) {
                         match file_name {
-                            CTOML | CLOCK => {
+                            CTOML => {
+                                sender.send((parent, path.clone()))?;
+                            }
+                            CLOCK if deep => {
                                 sender.send((parent, path.clone()))?;
                             }
                             _ => {}
