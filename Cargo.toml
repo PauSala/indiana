@@ -3,6 +3,10 @@ name = "mole"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+name = "mole"
+path = "src/lib.rs"
+
 [dependencies]
 clap = { version = "4.5.23", features = ["derive"] }
 hashbrown = {version = "0.15.2",  features = ["serde"]}
@@ -11,7 +15,14 @@ serde = {version = "1.0.217", features = ["derive"]}
 thiserror = "2.0.9"
 toml = "0.8.19"
 
+[dev-dependencies]
+criterion = "0.5.1"
+
+[[bench]]
+name = "search"
+harness = false
 
 [profile.release]
 lto = true
 codegen-units = 1
+

@@ -1,14 +1,10 @@
-pub mod cli;
-pub mod error;
-pub mod file_explorer;
-pub mod parallel_explorer;
-pub mod parser;
-pub mod printer;
-
 use clap::Parser;
 use cli::Args;
-use parser::data::OutputRow;
-use printer::pretty_table::print_table;
+use mole::{
+    cli, error, file_explorer, parallel_explorer,
+    parser::{self, data::OutputRow},
+    printer::pretty_table::print_table,
+};
 use std::process::ExitCode;
 
 fn main() -> ExitCode {
