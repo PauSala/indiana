@@ -17,4 +17,8 @@ pub struct Args {
     /// Flag to indicate whether to search for the dependency in Cargo.lock as well.
     #[arg(short, long, default_value_t = false)]
     pub deep: bool,
+
+    /// Flag to indicate whether to explore files in parallel.
+    #[arg(short, long, default_value_t = false)]
+    pub threaded: bool,
 }
