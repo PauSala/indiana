@@ -1,7 +1,7 @@
 use clap::Parser;
-use cli::Args;
 use mole::{
-    cli, error, file_explorer, parallel_explorer,
+    cli::Args,
+    error, file_explorer,
     parser::{self, data::OutputRow},
     printer::pretty_table::print_table,
 };
@@ -31,15 +31,5 @@ fn main() -> ExitCode {
 }
 
 fn explore(args: Args) -> Result<Vec<OutputRow>, error::MoleError> {
-    // Container for all explored files matching given dependency
-    let mut files;
-
-    if args.threaded {
-        files = parallel_explorer::collect_files(&args.path, args.deep)?;
-    } else {
-        files = hashbrown::HashMap::new();
-        file_explorer::collect_files(&args.path, &mut files, args.deep)?;
-    }
-
-    parser::FileParser::new().parse(files, &args.name)
+    parser::FileParser::new().parse(file_explorer::explore(&args)?, &args.name)
 }

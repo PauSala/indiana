@@ -1,19 +1,25 @@
-use crate::{error::MoleError, file_explorer::CargoFiles};
+use crate::{
+    error::MoleError,
+    file_explorer::{CargoFiles, CLOCK, CTOML},
+};
 use std::{fs, path::PathBuf, sync::mpsc::Sender};
 
-pub const CTOML: &str = "Cargo.toml";
-pub const CLOCK: &str = "Cargo.lock";
-
 use hashbrown::HashMap;
-use rayon::prelude::*;
+use rayon::{prelude::*, ThreadPoolBuilder};
 
 pub fn collect_files(path: &PathBuf, deep: bool) -> Result<HashMap<String, CargoFiles>, MoleError> {
     let mut files: HashMap<String, CargoFiles> = hashbrown::HashMap::new();
 
-    let (sender, reciever) = std::sync::mpsc::channel::<(String, PathBuf)>();
+    let (sender, receiver) = std::sync::mpsc::channel::<(String, PathBuf)>();
 
-    explore(path, deep, sender)?;
-    for (key, value) in reciever {
+    // Limit the number of threads used by rayon
+    let pool = ThreadPoolBuilder::new().num_threads(4).build()?;
+    pool.install(|| -> Result<(), MoleError> {
+        explore(path, deep, sender)?;
+        Ok(())
+    })?;
+
+    for (key, value) in receiver {
         match value.file_name().and_then(|f| f.to_str()) {
             Some(CTOML) => {
                 files.entry(key).or_default().ctoml = Some(value.clone());
@@ -27,13 +33,14 @@ pub fn collect_files(path: &PathBuf, deep: bool) -> Result<HashMap<String, Cargo
     Ok(files)
 }
 
-/// Collects all cargo files in a given directory and its subdirectories.
+/// Recursively searches for Cargo.toml and Cargo.lock files in a given directory.
+/// The found files are sent through the given sender.
 ///
 /// # Arguments
 ///
 /// * `path` - The path to the directory to search in.
-/// * `target` - The hashmap to store the found files in.
 /// * `deep` - A flag to indicate whether to include Cargo.lock as well.
+/// * `sender` - The sender channel to send found files.
 pub fn explore(
     path: &PathBuf,
     deep: bool,
@@ -68,7 +75,7 @@ pub fn explore(
                 Ok(())
             }) {
                 // Do not fail if any file cannot be read for any reason.
-                // Just print the file in the standart error.
+                // Just print the file in the standard error.
                 eprintln!("Error processing entry: {} {}", path.display(), e);
             }
         });
