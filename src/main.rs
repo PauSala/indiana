@@ -37,6 +37,7 @@ fn main() -> ExitCode {
 }
 
 fn explore(args: Args) -> Result<Vec<OutputRow>, error::MoleError> {
+    let start = std::time::Instant::now();
     // Container for all explored files matching given dependency
     let mut files: HashMap<String, CargoFiles> = hashbrown::HashMap::new();
     // file_explorer::collect_files(&args.path, &mut files, args.deep)?;
@@ -55,5 +56,7 @@ fn explore(args: Args) -> Result<Vec<OutputRow>, error::MoleError> {
             _ => {}
         }
     }
+    let elapsed = start.elapsed();
+    println!("Exploration time: {:?}", elapsed);
     parser::FileParser::new().parse(files, &args.name)
 }

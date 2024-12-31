@@ -46,6 +46,8 @@ pub fn collect_files(
                 }
                 Ok(())
             }) {
+                // Do not fail if any file cannot be read for any reason.
+                // Just print the file in the standart error.
                 eprintln!("Error processing entry: {} {}", path.display(), e);
             }
         });
