@@ -72,24 +72,22 @@ impl FileParser {
                     .map(|package| package.name)
                     .unwrap_or_else(|| DEFAULT_PACKAGE_NAME.to_string());
 
-                for deps in [toml.dependencies, toml.dev_dependencies] {
-                    if let Some(found) =
-                        self.parse_dependencies(deps, target_dep, path, &package_name)
-                    {
-                        res.push(found);
-                    }
-                }
-                if let Some(data) = toml.target.and_then(|target| target.targets) {
-                    for (_, target) in data {
-                        for deps in [target.dependencies, target.dev_dependencies] {
-                            if let Some(found) =
-                                self.parse_dependencies(deps, target_dep, path, &package_name)
-                            {
-                                res.push(found);
-                            }
-                        }
-                    }
-                }
+                let mut all_deps = vec![toml.dependencies, toml.dev_dependencies];
+
+                toml.target
+                    .and_then(|target| target.targets)
+                    .map(|targets| {
+                        targets.into_iter().for_each(|(_, target)| {
+                            all_deps.push(target.dependencies);
+                            all_deps.push(target.dev_dependencies);
+                        });
+                    });
+
+                all_deps.into_iter().for_each(|deps| {
+                    self.parse_dependencies(deps, target_dep, path, &package_name)
+                        .map(|found| res.push(found));
+                });
+
                 return res;
             }
             Err(e) => {
