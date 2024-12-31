@@ -9,6 +9,7 @@ Options:
   -n, --name <NAME>  The name of the dependency to search for
   -p, --path <PATH>  The directory to search in. Defaults to the current directory [default: .]
   -d, --deep         Flag to indicate whether to search for the dependency in Cargo.lock as well
+  -t, --threaded     Flag to indicate whether to explore files in parallel
   -h, --help         Print help
   -V, --version      Print version
 ```
