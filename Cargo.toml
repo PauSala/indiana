@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 clap = { version = "4.5.23", features = ["derive"] }
 hashbrown = {version = "0.15.2",  features = ["serde"]}
+rayon = "1.10.0"
 serde = {version = "1.0.217", features = ["derive"]}
 thiserror = "2.0.9"
 toml = "0.8.19"

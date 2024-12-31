@@ -1,14 +1,17 @@
 pub mod cli;
 pub mod error;
 pub mod file_explorer;
+pub mod parallel_explorer;
 pub mod parser;
 pub mod printer;
 
 use clap::Parser;
 use cli::Args;
+use file_explorer::{CargoFiles, CLOCK, CTOML};
+use hashbrown::HashMap;
 use parser::data::OutputRow;
 use printer::pretty_table::print_table;
-use std::process::ExitCode;
+use std::{path::PathBuf, process::ExitCode};
 
 fn main() -> ExitCode {
     let args = Args::parse();
@@ -35,8 +38,22 @@ fn main() -> ExitCode {
 
 fn explore(args: Args) -> Result<Vec<OutputRow>, error::MoleError> {
     // Container for all explored files matching given dependency
-    let mut files = hashbrown::HashMap::new();
+    let mut files: HashMap<String, CargoFiles> = hashbrown::HashMap::new();
+    // file_explorer::collect_files(&args.path, &mut files, args.deep)?;
 
-    file_explorer::collect_files(&args.path, &mut files, args.deep)?;
+    let (sender, reciever) = std::sync::mpsc::channel::<(String, PathBuf)>();
+
+    parallel_explorer::collect_files(&args.path, args.deep, sender)?;
+    for (key, value) in reciever {
+        match value.file_name().and_then(|f| f.to_str()) {
+            Some(CTOML) => {
+                files.entry(key).or_default().ctoml = Some(value.clone());
+            }
+            Some(CLOCK) => {
+                files.entry(key).or_default().clock = Some(value.clone());
+            }
+            _ => {}
+        }
+    }
     parser::FileParser::new().parse(files, &args.name)
 }

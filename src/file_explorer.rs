@@ -34,7 +34,9 @@ pub fn collect_files(
                 collect_files(&path, target, deep)?;
             } else if path.is_file() {
                 if let (Some(parent), Some(file_name)) = (
-                    path.parent().and_then(|p| p.to_str().map(String::from)),
+                    path.parent()
+                        .and_then(|p| p.canonicalize().ok())
+                        .and_then(|p| p.to_str().map(String::from)),
                     path.file_name().and_then(|f| f.to_str()),
                 ) {
                     match file_name {
