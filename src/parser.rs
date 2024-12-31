@@ -83,8 +83,8 @@ impl FileParser {
                         });
                     });
 
-                all_deps.into_iter().for_each(|deps| {
-                    self.parse_dependencies(deps, target_dep, path, &package_name)
+                all_deps.into_iter().flat_map(|deps| deps).for_each(|dep| {
+                    self.parse_dependencies(dep, target_dep, path, &package_name)
                         .map(|found| res.push(found));
                 });
 
@@ -129,26 +129,24 @@ impl FileParser {
 
     fn parse_dependencies(
         &self,
-        dependencies: Option<HashMap<String, Dependency>>,
+        dependencies: HashMap<String, Dependency>,
         target_dep: &str,
         path: &str,
         package_name: &str,
     ) -> Option<OutputRow> {
-        if let Some(dependencies) = dependencies {
-            for (dep_name, dep) in dependencies {
-                if dep_name == target_dep {
-                    let version = match dep {
-                        data::Dependency::Simple(version) => version,
-                        data::Dependency::Detailed(dependency_details) => dependency_details
-                            .version
-                            .unwrap_or(DEFAULT_VERSION.to_string()),
-                    };
-                    return Some(OutputRow {
-                        package_name: package_name.to_owned(),
-                        dep_version: version,
-                        path: path.to_string(),
-                    });
-                }
+        for (dep_name, dep) in dependencies {
+            if dep_name == target_dep {
+                let version = match dep {
+                    data::Dependency::Simple(version) => version,
+                    data::Dependency::Detailed(dependency_details) => dependency_details
+                        .version
+                        .unwrap_or(DEFAULT_VERSION.to_string()),
+                };
+                return Some(OutputRow {
+                    package_name: package_name.to_owned(),
+                    dep_version: version,
+                    path: path.to_string(),
+                });
             }
         }
         None
