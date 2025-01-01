@@ -16,15 +16,11 @@ fn main() -> ExitCode {
             ExitCode::FAILURE
         }
         Ok(deps) => {
-            let parsed_deps = deps
+            let rows = deps
                 .into_iter()
-                .map(|package| {
-                    let res: [String; 3] =
-                        [package.package_name, package.dep_version, package.path];
-                    res
-                })
+                .map(|package| [package.package_name, package.dep_version, package.path])
                 .collect();
-            print_table(vec!["PACKAGE", "VERSION", "PATH"], parsed_deps);
+            print_table(vec!["PACKAGE", "VERSION", "PATH"], rows);
             ExitCode::SUCCESS
         }
     }
