@@ -7,7 +7,7 @@ use std::{path::PathBuf, sync::mpsc::Sender};
 use hashbrown::HashMap;
 use rayon::{prelude::*, ThreadPoolBuilder};
 
-use super::read_entries;
+use super::filter_entries;
 
 pub fn collect_files(path: &PathBuf, deep: bool) -> Result<HashMap<String, CargoFiles>, MoleError> {
     let mut files: HashMap<String, CargoFiles> = hashbrown::HashMap::new();
@@ -48,7 +48,7 @@ pub fn explore(
     deep: bool,
     sender: Sender<(String, PathBuf)>,
 ) -> Result<(), MoleError> {
-    let entries = read_entries(path, deep);
+    let entries = filter_entries(path, deep);
 
     match entries {
         Err(e) => {

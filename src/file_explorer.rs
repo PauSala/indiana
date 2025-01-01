@@ -36,7 +36,7 @@ pub fn explore(args: &Args) -> Result<HashMap<String, CargoFiles>, error::MoleEr
     Ok(files)
 }
 
-fn read_entries<'a>(
+fn filter_entries<'a>(
     path: &'a PathBuf,
     deep: bool,
 ) -> Result<impl Iterator<Item = DirEntry> + 'a, error::MoleError> {

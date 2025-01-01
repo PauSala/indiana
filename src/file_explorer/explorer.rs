@@ -2,7 +2,7 @@ use crate::error::MoleError;
 use hashbrown::HashMap;
 use std::path::PathBuf;
 
-use super::{read_entries, CargoFiles, CLOCK, CTOML};
+use super::{filter_entries, CargoFiles, CLOCK, CTOML};
 
 /// Collects all cargo files in a given directory and its subdirectories.
 ///
@@ -16,7 +16,7 @@ pub fn collect_files(
     target: &mut HashMap<String, CargoFiles>,
     deep: bool,
 ) -> Result<(), MoleError> {
-    let entries = read_entries(path, deep);
+    let entries = filter_entries(path, deep);
 
     match entries {
         Err(e) => {
