@@ -31,4 +31,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-binary
-          path: target/x86_64-pc-windows-gnu/release/your_cli_app.exe
+          path: target/x86_64-pc-windows-gnu/release/mole.exe

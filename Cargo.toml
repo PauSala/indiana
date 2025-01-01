@@ -17,6 +17,7 @@ toml = "0.8.19"
 
 [dev-dependencies]
 criterion = "0.5.1"
+dotenv = "0.15"
 
 [[bench]]
 name = "search"
