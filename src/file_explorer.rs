@@ -1,14 +1,12 @@
 mod explorer;
 mod parallel_explorer;
 
+use crate::{cli::Args, error};
+use hashbrown::HashMap;
 use std::{
     fs::{self, DirEntry},
     path::PathBuf,
 };
-
-use hashbrown::HashMap;
-
-use crate::{cli::Args, error};
 
 pub const CTOML: &str = "Cargo.toml";
 pub const ETOML: &str = "toml";

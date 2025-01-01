@@ -2,10 +2,9 @@ use crate::{
     error::MoleError,
     file_explorer::{CargoFiles, CLOCK, CTOML},
 };
-use std::{path::PathBuf, sync::mpsc::Sender};
-
 use hashbrown::HashMap;
 use rayon::{prelude::*, ThreadPoolBuilder};
+use std::{path::PathBuf, sync::mpsc::Sender};
 
 use super::filter_entries;
 
