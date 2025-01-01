@@ -63,17 +63,15 @@ pub fn explore(
                         explore(&path, deep, sender.clone())?;
                     } else if path.is_file() {
                         if let (Some(parent), Some(file_name)) = (
-                            path.parent()
-                                .and_then(|p| p.canonicalize().ok())
-                                .and_then(|p| p.to_str().map(String::from)),
+                            path.parent().and_then(|p| Some(p.to_string_lossy())),
                             path.file_name().and_then(|f| f.to_str()),
                         ) {
                             match file_name {
                                 CTOML => {
-                                    sender.send((parent, path.clone()))?;
+                                    sender.send((parent.to_string(), path.clone()))?;
                                 }
                                 CLOCK if deep => {
-                                    sender.send((parent, path.clone()))?;
+                                    sender.send((parent.to_string(), path.clone()))?;
                                 }
                                 _ => {}
                             }

@@ -30,17 +30,17 @@ pub fn collect_files(
                     collect_files(&path, target, deep)?;
                 } else if path.is_file() {
                     if let (Some(parent), Some(file_name)) = (
-                        path.parent()
-                            .and_then(|p| p.canonicalize().ok())
-                            .and_then(|p| p.to_str().map(String::from)),
+                        path.parent().and_then(|p| Some(p.to_string_lossy())),
                         path.file_name().and_then(|f| f.to_str()),
                     ) {
                         match file_name {
                             CTOML => {
-                                target.entry(parent).or_default().ctoml = Some(path.clone());
+                                target.entry(parent.to_string()).or_default().ctoml =
+                                    Some(path.clone());
                             }
                             CLOCK if deep => {
-                                target.entry(parent).or_default().clock = Some(path.clone());
+                                target.entry(parent.to_string()).or_default().clock =
+                                    Some(path.clone());
                             }
                             _ => {}
                         }
