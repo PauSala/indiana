@@ -30,7 +30,7 @@ pub fn collect_files(
                     collect_files(&path, target, deep)?;
                 } else if path.is_file() {
                     if let (Some(parent), Some(file_name)) = (
-                        path.parent().and_then(|p| Some(p.to_string_lossy())),
+                        path.parent().map(|p| p.to_string_lossy()),
                         path.file_name().and_then(|f| f.to_str()),
                     ) {
                         match file_name {
