@@ -1,8 +1,8 @@
 use crate::error::MoleError;
 use hashbrown::HashMap;
-use std::{fs, path::PathBuf};
+use std::path::PathBuf;
 
-use super::{CargoFiles, CLOCK, CTOML};
+use super::{read_entries, CargoFiles, CLOCK, CTOML};
 
 /// Collects all cargo files in a given directory and its subdirectories.
 ///
@@ -16,38 +16,38 @@ pub fn collect_files(
     target: &mut HashMap<String, CargoFiles>,
     deep: bool,
 ) -> Result<(), MoleError> {
-    let entries = fs::read_dir(path).map_err(|e| e.to_string());
+    let entries = read_entries(path, deep);
 
-    if let Ok(entries) = entries {
-        for entry in entries {
-            let entry = entry.map_err(MoleError::IoError)?;
-            let path = entry.path();
+    match entries {
+        Err(e) => {
+            eprintln!("Error accessing entry: {} | {}", path.display(), e);
+        }
+        Ok(entries) => {
+            for entry in entries {
+                let path = entry.path();
 
-            if path.is_dir() {
-                collect_files(&path, target, deep)?;
-            } else if path.is_file() {
-                if let (Some(parent), Some(file_name)) = (
-                    path.parent()
-                        .and_then(|p| p.canonicalize().ok())
-                        .and_then(|p| p.to_str().map(String::from)),
-                    path.file_name().and_then(|f| f.to_str()),
-                ) {
-                    match file_name {
-                        CTOML => {
-                            target.entry(parent).or_default().ctoml = Some(path.clone());
+                if path.is_dir() {
+                    collect_files(&path, target, deep)?;
+                } else if path.is_file() {
+                    if let (Some(parent), Some(file_name)) = (
+                        path.parent()
+                            .and_then(|p| p.canonicalize().ok())
+                            .and_then(|p| p.to_str().map(String::from)),
+                        path.file_name().and_then(|f| f.to_str()),
+                    ) {
+                        match file_name {
+                            CTOML => {
+                                target.entry(parent).or_default().ctoml = Some(path.clone());
+                            }
+                            CLOCK if deep => {
+                                target.entry(parent).or_default().clock = Some(path.clone());
+                            }
+                            _ => {}
                         }
-                        CLOCK if deep => {
-                            target.entry(parent).or_default().clock = Some(path.clone());
-                        }
-                        _ => {}
                     }
                 }
             }
         }
-    } else {
-        // Do not fail if any file cannot be read for any reason.
-        // Just print the file in the standart error.
-        eprintln!("Cannot access: {:?}", path);
     }
     Ok(())
 }

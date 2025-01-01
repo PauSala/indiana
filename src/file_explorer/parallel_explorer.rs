@@ -2,10 +2,12 @@ use crate::{
     error::MoleError,
     file_explorer::{CargoFiles, CLOCK, CTOML},
 };
-use std::{fs, path::PathBuf, sync::mpsc::Sender};
+use std::{path::PathBuf, sync::mpsc::Sender};
 
 use hashbrown::HashMap;
 use rayon::{prelude::*, ThreadPoolBuilder};
+
+use super::read_entries;
 
 pub fn collect_files(path: &PathBuf, deep: bool) -> Result<HashMap<String, CargoFiles>, MoleError> {
     let mut files: HashMap<String, CargoFiles> = hashbrown::HashMap::new();
@@ -46,42 +48,44 @@ pub fn explore(
     deep: bool,
     sender: Sender<(String, PathBuf)>,
 ) -> Result<(), MoleError> {
-    let entries = fs::read_dir(path)?;
+    let entries = read_entries(path, deep);
 
-    entries
-        .par_bridge()
-        .map(|entry| entry.map_err(MoleError::IoError))
-        .for_each(|entry_result| {
-            if let Err(e) = entry_result.and_then(|entry| {
-                let path = entry.path();
+    match entries {
+        Err(e) => {
+            eprintln!("Error accessing entry: {} | {}", path.display(), e);
+        }
+        Ok(entries) => {
+            entries.par_bridge().for_each(|entry| {
+                if let Err(e) = (|| -> Result<(), MoleError> {
+                    let path = entry.path();
 
-                if path.is_dir() {
-                    explore(&path, deep, sender.clone())?;
-                } else if path.is_file() {
-                    if let (Some(parent), Some(file_name)) = (
-                        path.parent()
-                            .and_then(|p| p.canonicalize().ok())
-                            .and_then(|p| p.to_str().map(String::from)),
-                        path.file_name().and_then(|f| f.to_str()),
-                    ) {
-                        match file_name {
-                            CTOML => {
-                                sender.send((parent, path.clone()))?;
+                    if path.is_dir() {
+                        explore(&path, deep, sender.clone())?;
+                    } else if path.is_file() {
+                        if let (Some(parent), Some(file_name)) = (
+                            path.parent()
+                                .and_then(|p| p.canonicalize().ok())
+                                .and_then(|p| p.to_str().map(String::from)),
+                            path.file_name().and_then(|f| f.to_str()),
+                        ) {
+                            match file_name {
+                                CTOML => {
+                                    sender.send((parent, path.clone()))?;
+                                }
+                                CLOCK if deep => {
+                                    sender.send((parent, path.clone()))?;
+                                }
+                                _ => {}
                             }
-                            CLOCK if deep => {
-                                sender.send((parent, path.clone()))?;
-                            }
-                            _ => {}
                         }
                     }
+                    Ok(())
+                })() {
+                    eprintln!("Error processing entry: {} {}", path.display(), e);
                 }
-                Ok(())
-            }) {
-                // Do not fail if any file cannot be read for any reason.
-                // Just print the file in the standard error.
-                eprintln!("Error processing entry: {} {}", path.display(), e);
-            }
-        });
+            });
+        }
+    }
 
     Ok(())
 }
