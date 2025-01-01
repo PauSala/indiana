@@ -1,40 +1,32 @@
 pub type Row = [String; 3];
 
 pub fn print_table(headers: Vec<&str>, rows: Vec<Row>) {
-    let mut max = max_non_last_value(&headers, &rows);
+    let max_by_col = max_by_column(&headers, &rows);
 
-    let margin = 2;
-    max += margin;
+    let margin = 4;
 
     // Headers
-    for header in &headers {
-        print!("{:<width$}", header, width = max);
+    for (i, header) in headers.iter().enumerate() {
+        print!("{:<width$}", header, width = max_by_col[i] + margin);
     }
     println!();
 
     // Rows
     for row in rows {
-        for cell in row {
-            print!("{:<width$}", cell, width = max);
+        for (i, cell) in row.iter().enumerate() {
+            print!("{:<width$}", cell, width = max_by_col[i] + margin);
         }
         println!();
     }
 }
 
-fn max_non_last_value(headers: &[&str], rows: &[Row]) -> usize {
-    let mut max = headers[0..headers.len() - 1]
-        .iter()
-        .max_by_key(|a| a.len())
-        .unwrap_or(&"")
-        .len();
+fn max_by_column(headers: &[&str], rows: &[Row]) -> Vec<usize> {
+    let mut max = vec![0; headers.len()];
 
-    rows.iter().for_each(|r| {
-        let local_max = r[0..r.len() - 1].iter().max_by_key(|a| a.len());
-        if let Some(max_str) = local_max {
-            if max_str.len() > max {
-                max = max_str.len();
-            }
-        }
-    });
+    for (i, header) in headers.iter().enumerate() {
+        let local_max = rows.iter().map(|r| r[i].len()).max().unwrap_or(0);
+        max[i] = std::cmp::max(local_max, header.len());
+    }
+
     max
 }
