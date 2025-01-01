@@ -1,11 +1,7 @@
 # Mole
 
 ```console
-Searches for a specified cargo dependency in all projects within a given directory.
-Examples:
-    - mole -p ~/.cargo -f '>=1.0.0' serde
-    - mole -p ~/.cargo -f '>=1.0.0, <1.0.150' -t -d serde
-
+Searches for a specified cargo dependency in all projects within a given directory
 
 Usage: mole [OPTIONS] <NAME>
 
