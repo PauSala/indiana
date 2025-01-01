@@ -1,10 +1,10 @@
 name: Build for Windows
 
 on:
-  workflow_run:
-    workflows: ["Run Tests"]
-    types:
-      - completed
+  workflow_dispatch: # Allows manual triggering of the workflow
+
+permissions:
+  contents: write
 
 jobs:
   build-windows:
