@@ -22,7 +22,21 @@ pub struct CargoFiles {
     pub clock: Option<PathBuf>,
 }
 
-pub fn read_entries<'a>(
+pub fn explore(args: &Args) -> Result<HashMap<String, CargoFiles>, error::MoleError> {
+    // Container for all explored files matching given dependency
+    let mut files;
+
+    if args.threaded {
+        files = parallel_explorer::collect_files(&args.path, args.deep)?;
+    } else {
+        files = hashbrown::HashMap::new();
+        explorer::collect_files(&args.path, &mut files, args.deep)?;
+    }
+
+    Ok(files)
+}
+
+fn read_entries<'a>(
     path: &'a PathBuf,
     deep: bool,
 ) -> Result<impl Iterator<Item = DirEntry> + 'a, error::MoleError> {
@@ -42,18 +56,4 @@ pub fn read_entries<'a>(
                     .map_or(false, |ext| ext == ETOML || (deep && ext == ELOCK))
         });
     Ok(entries)
-}
-
-pub fn explore(args: &Args) -> Result<HashMap<String, CargoFiles>, error::MoleError> {
-    // Container for all explored files matching given dependency
-    let mut files;
-
-    if args.threaded {
-        files = parallel_explorer::collect_files(&args.path, args.deep)?;
-    } else {
-        files = hashbrown::HashMap::new();
-        explorer::collect_files(&args.path, &mut files, args.deep)?;
-    }
-
-    Ok(files)
 }
