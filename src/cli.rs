@@ -24,7 +24,7 @@ pub struct Args {
     /// Semver filter to filter the dependency by.
     /// Accepts a single semver version or a range in quotes, coma separated.
     ///
-    /// Example: ">= 1.0.0, < 2.0.0"
+    /// Example: ">= 1.0.0, <2.0.0"
     #[arg(short, long, default_value = None)]
     pub filter: Option<String>,
 }
