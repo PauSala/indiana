@@ -7,7 +7,6 @@ use clap::Parser;
 #[command(version, about, long_about = None)]
 pub struct Args {
     /// The name of the dependency to search for.
-    #[arg(short, long)]
     pub name: String,
 
     /// The directory to search in. Defaults to the current directory.
@@ -21,4 +20,11 @@ pub struct Args {
     /// Flag to indicate whether to explore files in parallel.
     #[arg(short, long, default_value_t = false)]
     pub threaded: bool,
+
+    /// Semver filter to filter the dependency by.
+    /// Accepts a single semver version or a range in quotes, coma separated.
+    ///
+    /// Example: ">= 1.0.0, < 2.0.0"
+    #[arg(short, long, default_value = None)]
+    pub filter: Option<String>,
 }

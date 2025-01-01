@@ -10,6 +10,9 @@ pub enum MoleError {
     #[error("SendError: {0}")]
     SendError(#[from] std::sync::mpsc::SendError<(std::string::String, PathBuf)>),
 
-    #[error("JoinError: {0}")]
+    #[error("ThreadPoolBuildError: {0}")]
     ThreadPoolBuildError(#[from] rayon::ThreadPoolBuildError),
+
+    #[error("SemverError: {0}")]
+    SemverError(#[from] semver::Error),
 }

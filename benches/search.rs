@@ -22,6 +22,7 @@ fn criterion_benchmark(c: &mut Criterion) {
                 path: path.clone(),
                 deep: true,
                 threaded: true,
+                filter: None,
             }))
         })
     });
