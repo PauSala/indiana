@@ -27,11 +27,7 @@ impl FileParser {
             if let Some(ref toml) = package.ctoml {
                 // Parse .toml
                 let toml_file = fs::read_to_string(toml)?;
-                let parsed = self.parse_toml(
-                    &toml_file,
-                    target_dep,
-                    toml.to_str().expect("Path should be a file"),
-                );
+                let parsed = self.parse_toml(&toml_file, target_dep, &toml.to_string_lossy());
 
                 let package_name;
                 if let Some(parsed) = &parsed
@@ -51,7 +47,7 @@ impl FileParser {
                     let parsed = self.parse_lock(
                         &lock_file,
                         target_dep,
-                        lock.to_str().unwrap(),
+                        &lock.to_string_lossy(),
                         package_name,
                     );
                     found.extend(parsed);

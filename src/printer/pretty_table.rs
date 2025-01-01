@@ -27,6 +27,5 @@ fn max_by_column(headers: &[&str], rows: &[Row]) -> Vec<usize> {
         let local_max = rows.iter().map(|r| r[i].len()).max().unwrap_or(0);
         max[i] = std::cmp::max(local_max, header.len());
     }
-
     max
 }
