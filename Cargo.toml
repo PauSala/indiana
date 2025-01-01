@@ -3,7 +3,7 @@ name = "mole"
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
-authors = "Pau Sala"
+authors = ["Pau Sala"]
 
 [lib]
 name = "mole"
