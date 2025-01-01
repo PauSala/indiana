@@ -2,9 +2,16 @@ use std::path::PathBuf;
 
 use clap::Parser;
 
+static LONG_ABOUT: &str = r#"
+Searches for a specified cargo dependency in all projects within a given directory. 
+Examples:
+    - mole -p ~/.cargo -f '>=1.0.0' serde
+    - mole -p ~/.cargo -f '>=1.0.0, <1.0.150' -t -d serde
+"#;
+
 /// Searches for a specified cargo dependency in all projects within a given directory.
 #[derive(Parser, Debug)]
-#[command(version, about, long_about = None)]
+#[command(version, about, long_about = LONG_ABOUT)]
 pub struct Args {
     /// The name of the dependency to search for.
     pub name: String,
