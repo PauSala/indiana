@@ -1,3 +1,4 @@
+use super::filter_entries;
 use crate::{
     error::MoleError,
     file_explorer::{CargoFiles, CLOCK, CTOML},
@@ -5,8 +6,6 @@ use crate::{
 use hashbrown::HashMap;
 use rayon::{prelude::*, ThreadPoolBuilder};
 use std::{path::PathBuf, sync::mpsc::Sender};
-
-use super::filter_entries;
 
 pub fn collect_files(path: &PathBuf, deep: bool) -> Result<HashMap<String, CargoFiles>, MoleError> {
     let mut files: HashMap<String, CargoFiles> = hashbrown::HashMap::new();
