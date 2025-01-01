@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use clap::Parser;
 
-/// Searches for a specified cargo dependency in all projects within a given directory.
+/// Searches recursively for a specified cargo dependency in all projects within a given directory.
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 pub struct Args {
