@@ -11,7 +11,7 @@ Arguments:
 
 Options:
   -p, --path <PATH>
-          The directory to search in. Defaults to the current directory
+          The directory to search in
 
           [default: .]
 
@@ -25,6 +25,12 @@ Options:
           Semver filter to filter the dependency by. Accepts a single semver version or a range in quotes, coma separated.
 
           Example: ">= 1.0.0, <2.0.0"
+
+  -o, --output <OUTPUT>
+          Output format
+
+          [default: table]
+          [possible values: table, json]
 
   -h, --help
           Print help (see a summary with '-h')

@@ -375,6 +375,7 @@ dependencies = [
  "rayon",
  "semver",
  "serde",
+ "serde_json",
  "thiserror",
  "toml",
 ]

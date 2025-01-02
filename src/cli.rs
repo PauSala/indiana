@@ -1,6 +1,6 @@
-use std::path::PathBuf;
-
+use crate::printer::PrintFormat;
 use clap::Parser;
+use std::path::PathBuf;
 
 /// Searches recursively for a specified cargo dependency in all projects within a given directory.
 #[derive(Parser, Debug)]
@@ -9,7 +9,7 @@ pub struct Args {
     /// The name of the dependency to search for.
     pub name: String,
 
-    /// The directory to search in. Defaults to the current directory.
+    /// The directory to search in.
     #[arg(short, long, default_value = ".")]
     pub path: PathBuf,
 
@@ -27,4 +27,8 @@ pub struct Args {
     /// Example: ">= 1.0.0, <2.0.0"
     #[arg(short, long, default_value = None)]
     pub filter: Option<String>,
+
+    /// Output format.
+    #[arg(short, long, default_value = "table")]
+    pub output: PrintFormat,
 }

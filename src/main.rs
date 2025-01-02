@@ -3,13 +3,14 @@ use mole::{
     cli::Args,
     error, file_explorer,
     parser::{self, data::OutputRow},
-    printer::pretty_table::print_table,
+    printer::print,
 };
 use semver::VersionReq;
 use std::process::ExitCode;
 
 fn main() -> ExitCode {
     let args = Args::parse();
+    let format = args.output.clone();
 
     match explore(args) {
         Err(e) => {
@@ -17,11 +18,7 @@ fn main() -> ExitCode {
             ExitCode::FAILURE
         }
         Ok(deps) => {
-            let rows = deps
-                .into_iter()
-                .map(|package| [package.package_name, package.dep_version, package.path])
-                .collect();
-            print_table(vec!["PACKAGE", "VERSION", "PATH"], rows);
+            print(deps, &format);
             ExitCode::SUCCESS
         }
     }
