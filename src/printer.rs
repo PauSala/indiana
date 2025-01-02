@@ -20,9 +20,7 @@ impl FromStr for PrintFormat {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
             "table" => Ok(PrintFormat::Table),
-
             "json" => Ok(PrintFormat::Json),
-
             _ => Err(format!("Invalid value: {}", s)),
         }
     }
