@@ -39,12 +39,12 @@ pub fn print(rows: Vec<OutputRow>, format: &PrintFormat) {
         }
         PrintFormat::Json => {
             let mut mapped: HashMap<String, Vec<DepInfo>> = HashMap::new();
-            for row in rows {
+            rows.into_iter().for_each(|row| {
                 mapped.entry(row.package_name).or_default().push(DepInfo {
                     version: row.dep_version,
                     path: row.path,
                 });
-            }
+            });
             print_json(mapped);
         }
     }

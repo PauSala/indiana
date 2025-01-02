@@ -4,6 +4,7 @@ use hashbrown::HashMap;
 use mole::{
     cli::Args,
     file_explorer::{self, CargoFiles},
+    printer::PrintFormat,
 };
 use std::env;
 use std::{hint::black_box, path::PathBuf};
@@ -23,6 +24,7 @@ fn criterion_benchmark(c: &mut Criterion) {
                 deep: true,
                 threaded: true,
                 filter: None,
+                output: PrintFormat::Table,
             }))
         })
     });
