@@ -1,11 +1,9 @@
-use std::str::FromStr;
-
+use crate::parser::data::OutputRow;
 use clap::ValueEnum;
 use hashbrown::HashMap;
 use json::{print_json, DepInfo};
 use pretty_table::print_table;
-
-use crate::parser::data::OutputRow;
+use std::str::FromStr;
 
 pub mod json;
 pub mod pretty_table;
@@ -37,7 +35,7 @@ pub fn print(rows: Vec<OutputRow>, format: &PrintFormat) {
                 .into_iter()
                 .map(|package| [package.package_name, package.dep_version, package.path])
                 .collect();
-            print_table(vec!["PACKAGE", "VERSION", "PATH"], rows);
+            print_table(rows);
         }
         PrintFormat::Json => {
             let mut mapped: HashMap<String, Vec<DepInfo>> = HashMap::new();

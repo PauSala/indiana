@@ -1,12 +1,13 @@
 pub type Row = [String; 3];
+pub static HEADERS: [&str; 3] = ["PACKAGE", "VERSION", "PATH"];
 
-pub fn print_table(headers: Vec<&str>, rows: Vec<Row>) {
-    let max_by_col = max_by_column(&headers, &rows);
+pub fn print_table(rows: Vec<Row>) {
+    let max_by_col = max_by_column(&HEADERS, &rows);
 
     let margin = 4;
 
     // Headers
-    for (i, header) in headers.iter().enumerate() {
+    for (i, header) in HEADERS.iter().enumerate() {
         print!("{:<width$}", header, width = max_by_col[i] + margin);
     }
     println!();
