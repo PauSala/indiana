@@ -38,15 +38,6 @@ fn filter_entries(
     path: &PathBuf,
     deep: bool,
 ) -> Result<impl Iterator<Item = DirEntry> + '_, error::MoleError> {
-    fn is_valid_entry(entry: &DirEntry, deep: bool) -> bool {
-        let path = entry.path();
-        path.is_dir()
-            || path
-                .extension()
-                .and_then(|ext| ext.to_str())
-                .map_or(false, |ext| ext == ETOML || (deep && ext == ELOCK))
-    }
-
     let entries = fs::read_dir(path)?.filter_map(move |entry| match entry {
         Ok(entry) => {
             if is_valid_entry(&entry, deep) {
@@ -62,4 +53,13 @@ fn filter_entries(
     });
 
     Ok(entries)
+}
+
+fn is_valid_entry(entry: &DirEntry, deep: bool) -> bool {
+    let path = entry.path();
+    path.is_dir()
+        || path
+            .extension()
+            .and_then(|ext| ext.to_str())
+            .map_or(false, |ext| ext == ETOML || (deep && ext == ELOCK))
 }
