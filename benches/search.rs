@@ -25,6 +25,7 @@ fn criterion_benchmark(c: &mut Criterion) {
                 threaded: true,
                 filter: None,
                 output: PrintFormat::Table,
+                symlinks: false,
             }))
         })
     });

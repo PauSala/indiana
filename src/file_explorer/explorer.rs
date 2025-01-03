@@ -15,8 +15,9 @@ pub fn collect_files(
     path: &PathBuf,
     target: &mut HashMap<String, CargoFiles>,
     deep: bool,
+    symlinks: bool,
 ) -> Result<(), MoleError> {
-    let entries = filter_entries(path, deep);
+    let entries = filter_entries(path, deep, symlinks);
 
     match entries {
         Err(e) => {
@@ -27,7 +28,7 @@ pub fn collect_files(
                 let path = entry.path();
 
                 if path.is_dir() {
-                    collect_files(&path, target, deep)?;
+                    collect_files(&path, target, deep, symlinks)?;
                 } else if path.is_file() {
                     if let (Some(parent), Some(file_name)) = (
                         path.parent().map(|p| p.to_string_lossy()),

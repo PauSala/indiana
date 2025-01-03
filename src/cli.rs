@@ -13,14 +13,6 @@ pub struct Args {
     #[arg(short, long, default_value = ".")]
     pub path: PathBuf,
 
-    /// Flag to indicate whether to search for the dependency in Cargo.lock as well.
-    #[arg(short, long, default_value_t = false)]
-    pub deep: bool,
-
-    /// Flag to indicate whether to explore files in parallel.
-    #[arg(short, long, default_value_t = false)]
-    pub threaded: bool,
-
     /// Semver filter to filter the dependency by.
     /// Accepts a single semver version or a range in quotes, coma separated.
     ///
@@ -31,4 +23,16 @@ pub struct Args {
     /// Output format.
     #[arg(short, long, default_value = "table")]
     pub output: PrintFormat,
+
+    /// Flag to indicate whether to search for the dependency in Cargo.lock as well.
+    #[arg(short, long, default_value_t = false)]
+    pub deep: bool,
+
+    /// Flag to indicate whether to explore files in parallel.
+    #[arg(short, long, default_value_t = false)]
+    pub threaded: bool,
+
+    /// Flag to indicate whether to follow symbolic links.
+    #[arg(short, long, default_value_t = false)]
+    pub symlinks: bool,
 }

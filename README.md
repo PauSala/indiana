@@ -15,12 +15,6 @@ Options:
 
           [default: .]
 
-  -d, --deep
-          Flag to indicate whether to search for the dependency in Cargo.lock as well
-
-  -t, --threaded
-          Flag to indicate whether to explore files in parallel
-
   -f, --filter <FILTER>
           Semver filter to filter the dependency by. Accepts a single semver version or a range in quotes, coma separated.
 
@@ -31,6 +25,15 @@ Options:
 
           [default: table]
           [possible values: table, json]
+
+  -d, --deep
+          Flag to indicate whether to search for the dependency in Cargo.lock as well
+
+  -t, --threaded
+          Flag to indicate whether to explore files in parallel
+
+  -s, --symlinks
+          Flag to indicate whether to follow symbolic links
 
   -h, --help
           Print help (see a summary with '-h')
