@@ -41,15 +41,9 @@ fn filter_entries(
     let entries = fs::read_dir(path)?.filter_map(move |entry| match entry {
         Ok(entry) => {
             if symlinks {
-                if filter_entry_with_symlinks(&entry, deep, symlinks) {
-                    Some(entry)
-                } else {
-                    None
-                }
-            } else if filter_entry(&entry, deep) {
-                Some(entry)
+                filter_entry_with_symlinks(entry, deep, symlinks)
             } else {
-                None
+                filter_entry(entry, deep)
             }
         }
         Err(e) => {
@@ -61,20 +55,28 @@ fn filter_entries(
     Ok(entries)
 }
 
-fn filter_entry_with_symlinks(entry: &DirEntry, deep: bool, symlinks: bool) -> bool {
+fn filter_entry_with_symlinks(entry: DirEntry, deep: bool, symlinks: bool) -> Option<DirEntry> {
     let path = entry.path();
-    path.is_dir() && (!path.is_symlink() || symlinks)
+    if path.is_dir() && (!path.is_symlink() || symlinks)
         || path
             .extension()
             .and_then(|ext| ext.to_str())
             .map_or(false, |ext| ext == ETOML || (deep && ext == ELOCK))
+    {
+        return Some(entry);
+    }
+    None
 }
 
-fn filter_entry(entry: &DirEntry, deep: bool) -> bool {
+fn filter_entry(entry: DirEntry, deep: bool) -> Option<DirEntry> {
     let path = entry.path();
-    path.is_dir()
+    if path.is_dir()
         || path
             .extension()
             .and_then(|ext| ext.to_str())
             .map_or(false, |ext| ext == ETOML || (deep && ext == ELOCK))
+    {
+        return Some(entry);
+    }
+    None
 }
