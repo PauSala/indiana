@@ -22,7 +22,6 @@ pub struct CargoFiles {
 
 pub fn explore(args: &Args) -> Result<HashMap<String, CargoFiles>, error::MoleError> {
     let mut files;
-
     if args.threaded {
         files = parallel_explorer::collect_files(&args.path, args.deep, args.symlinks)?;
     } else {
