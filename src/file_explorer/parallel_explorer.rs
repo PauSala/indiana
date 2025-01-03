@@ -12,7 +12,6 @@ pub fn collect_files(path: &PathBuf, deep: bool) -> Result<HashMap<String, Cargo
 
     let (sender, receiver) = std::sync::mpsc::channel::<(String, PathBuf)>();
 
-    // Limit the number of threads used by rayon
     let pool = ThreadPoolBuilder::new().num_threads(4).build()?;
     pool.install(|| -> Result<(), MoleError> {
         explore(path, deep, sender)?;
