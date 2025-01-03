@@ -34,24 +34,32 @@ pub fn explore(args: &Args) -> Result<HashMap<String, CargoFiles>, error::MoleEr
     Ok(files)
 }
 
-fn filter_entries<'a>(
-    path: &'a PathBuf,
+fn filter_entries(
+    path: &PathBuf,
     deep: bool,
-) -> Result<impl Iterator<Item = DirEntry> + 'a, error::MoleError> {
-    let entries = fs::read_dir(path)?
-        .inspect(|entry| {
-            if let Err(ref e) = entry {
-                eprintln!("Error accessing entry: {} | {e}", path.display());
+) -> Result<impl Iterator<Item = DirEntry> + '_, error::MoleError> {
+    fn is_valid_entry(entry: &DirEntry, deep: bool) -> bool {
+        let path = entry.path();
+        path.is_dir()
+            || path
+                .extension()
+                .and_then(|ext| ext.to_str())
+                .map_or(false, |ext| ext == ETOML || (deep && ext == ELOCK))
+    }
+
+    let entries = fs::read_dir(path)?.filter_map(move |entry| match entry {
+        Ok(entry) => {
+            if is_valid_entry(&entry, deep) {
+                Some(entry)
+            } else {
+                None
             }
-        })
-        .filter_map(|entry| entry.ok())
-        .filter(move |entry| {
-            let path = entry.path();
-            path.is_dir()
-                || path
-                    .extension()
-                    .and_then(|ext| ext.to_str())
-                    .map_or(false, |ext| ext == ETOML || (deep && ext == ELOCK))
-        });
+        }
+        Err(e) => {
+            eprintln!("Error accessing entry: {} | {e}", path.display());
+            None
+        }
+    });
+
     Ok(entries)
 }

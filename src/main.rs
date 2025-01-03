@@ -10,7 +10,7 @@ use std::process::ExitCode;
 
 fn main() -> ExitCode {
     let args = Args::parse();
-    let format = args.output.clone();
+    let format = args.output;
 
     match explore(args) {
         Err(e) => {
